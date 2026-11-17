@@ -1,0 +1,13 @@
+import ExcelJS from 'exceljs';
+import { readFile } from 'node:fs/promises';
+const trip = JSON.parse(await readFile(new URL('./itinerary.json', import.meta.url), 'utf8'));
+const workbook = new ExcelJS.Workbook();
+const sheet = workbook.addWorksheet('여행 일정');
+sheet.addRow(['날짜','시간','장소명','주소','위도','경도','메모','이동수단','이미지URL']);
+for (const day of trip.days) for (const p of day.places) sheet.addRow([day.date,p.time,p.name,p.address,p.lat,p.lng,p.memo,p.mode,p.image]);
+sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF285748' } };
+sheet.columns.forEach((col, i) => { col.width = [15,12,32,56,15,15,65,14,24][i]; });
+sheet.views = [{state:'frozen',ySplit:1}];
+await workbook.xlsx.writeFile(new URL('./itinerary.xlsx', import.meta.url).pathname);
+console.log('sample/itinerary.xlsx created');

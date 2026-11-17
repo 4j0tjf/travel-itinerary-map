@@ -1,0 +1,170 @@
+{
+  "id": "fuji-sample",
+  "title": "후지산, 느리게 여행하기",
+  "subtitle": "호수와 작은 마을 사이, 우리만의 3일",
+  "country": "일본",
+  "region": "야마나시",
+  "days": [
+    {
+      "date": "2026-11-20",
+      "title": "후지산을 만나는 첫날",
+      "description": "상징적인 풍경부터 고요한 호숫가까지",
+      "places": [
+        {
+          "id": "arakura",
+          "time": "09:00",
+          "endTime": "10:30",
+          "name": "아라쿠라야마 센겐 공원",
+          "nameJa": "新倉山浅間公園",
+          "category": "전망 명소",
+          "address": "2-4-1 Asama, Fujiyoshida, Yamanashi",
+          "lat": 35.5013,
+          "lng": 138.8014,
+          "memo": "붉은 오층탑 너머로 만나는 후지산. 398개의 계단을 천천히 올라가 보세요.",
+          "image": "/images/pagoda.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "honcho",
+          "time": "11:00",
+          "endTime": "12:00",
+          "name": "혼초 거리",
+          "nameJa": "本町通り",
+          "category": "산책 · 사진",
+          "address": "2 Chome Shimoyoshida, Fujiyoshida, Yamanashi",
+          "lat": 35.4894,
+          "lng": 138.8011,
+          "memo": "후지산이 길 끝에 걸린 작은 상점가. 차도를 피해 인도에서 사진을 남겨 보세요.",
+          "image": "/images/street.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "houtou",
+          "time": "12:30",
+          "endTime": "13:30",
+          "name": "호토 후도 · 가와구치코 본점",
+          "nameJa": "ほうとう不動 河口湖本店",
+          "category": "점심 식사",
+          "address": "3631-2 Funatsu, Fujikawaguchiko, Yamanashi",
+          "lat": 35.4985,
+          "lng": 138.7686,
+          "memo": "야마나시의 향토 음식, 따뜻한 호토 한 그릇. 영업시간은 방문 전 확인해 주세요.",
+          "image": "/images/food.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "oishi",
+          "time": "14:00",
+          "endTime": "15:30",
+          "name": "오이시 공원",
+          "nameJa": "大石公園",
+          "category": "자연 · 산책",
+          "address": "2585 Oishi, Fujikawaguchiko, Yamanashi",
+          "lat": 35.5231,
+          "lng": 138.7456,
+          "memo": "호수 너머 후지산을 바라보며 느리게 걷는 시간. 호숫가 벤치에서 잠시 쉬어 가세요.",
+          "image": "/images/lake.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "cafe",
+          "time": "16:00",
+          "endTime": "17:00",
+          "name": "가와구치코 호숫가 카페",
+          "nameJa": "河口湖畔",
+          "category": "카페 · 휴식",
+          "address": "Kawaguchi, Fujikawaguchiko, Yamanashi",
+          "lat": 35.5205,
+          "lng": 138.7662,
+          "memo": "여행의 첫날을 마무리하는 커피 한 잔. 카페는 현장에서 골라보세요.",
+          "image": "/images/cafe.jpg",
+          "mode": "DRIVE"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-21",
+      "title": "숲과 호수 사이",
+      "description": "조용한 자연 속에서 한 박자 쉬어 가는 하루",
+      "places": [
+        {
+          "id": "oishi",
+          "time": "09:30",
+          "endTime": "11:00",
+          "name": "오이시 공원",
+          "nameJa": "大石公園",
+          "category": "자연 · 산책",
+          "address": "2585 Oishi, Fujikawaguchiko, Yamanashi",
+          "lat": 35.5231,
+          "lng": 138.7456,
+          "memo": "호수 너머 후지산을 바라보며 느리게 걷는 시간. 호숫가 벤치에서 잠시 쉬어 가세요.",
+          "image": "/images/lake.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "saiko",
+          "time": "11:30",
+          "endTime": "13:00",
+          "name": "사이코 이야시노사토",
+          "nameJa": "西湖いやしの里根場",
+          "category": "전통 마을",
+          "address": "2710 Saiko, Fujikawaguchiko, Yamanashi",
+          "lat": 35.5042,
+          "lng": 138.6598,
+          "memo": "초가지붕 마을에서 만나는 옛 일본의 풍경.",
+          "image": "/images/street.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "cafe",
+          "time": "15:00",
+          "endTime": "16:30",
+          "name": "가와구치코 호숫가 카페",
+          "nameJa": "河口湖畔",
+          "category": "카페 · 휴식",
+          "address": "Kawaguchi, Fujikawaguchiko, Yamanashi",
+          "lat": 35.5205,
+          "lng": 138.7662,
+          "memo": "여행의 첫날을 마무리하는 커피 한 잔. 카페는 현장에서 골라보세요.",
+          "image": "/images/cafe.jpg",
+          "mode": "DRIVE"
+        }
+      ]
+    },
+    {
+      "date": "2026-11-22",
+      "title": "다시 오고 싶은 풍경",
+      "description": "마지막까지 천천히, 호수를 마음에 담아",
+      "places": [
+        {
+          "id": "cafe",
+          "time": "10:00",
+          "endTime": "11:00",
+          "name": "가와구치코 호숫가 카페",
+          "nameJa": "河口湖畔",
+          "category": "카페 · 휴식",
+          "address": "Kawaguchi, Fujikawaguchiko, Yamanashi",
+          "lat": 35.5205,
+          "lng": 138.7662,
+          "memo": "여행의 첫날을 마무리하는 커피 한 잔. 카페는 현장에서 골라보세요.",
+          "image": "/images/cafe.jpg",
+          "mode": "DRIVE"
+        },
+        {
+          "id": "arakura",
+          "time": "12:00",
+          "endTime": "13:30",
+          "name": "아라쿠라야마 센겐 공원",
+          "nameJa": "新倉山浅間公園",
+          "category": "전망 명소",
+          "address": "2-4-1 Asama, Fujiyoshida, Yamanashi",
+          "lat": 35.5013,
+          "lng": 138.8014,
+          "memo": "붉은 오층탑 너머로 만나는 후지산. 398개의 계단을 천천히 올라가 보세요.",
+          "image": "/images/pagoda.jpg",
+          "mode": "DRIVE"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Merge only into the existing Caddy configuration; preserve other site blocks.
+# If a 19991115.xyz block already exists, update its reverse_proxy destination.
+19991115.xyz {
+    reverse_proxy 127.0.0.1:6001
+}
