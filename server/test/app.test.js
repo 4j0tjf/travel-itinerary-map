@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import ExcelJS from "exceljs";
 import { createApp } from "../app.js";
+import { fetchGoogleSheet } from "../services/google-sheets.js";
 const password = "test-password-2026";
 const clientHeader = { "X-Travel-Client": "1" };
 async function fixture(fn, options = {}) {
@@ -465,6 +466,65 @@ test("HTTPS proxy cookies are secure and corrupt database files are preserved", 
     assert.equal(failed.status, 500);
     assert.equal(await readFile(file, "utf8"), "broken-json");
   }));
+
+test("Google sheet import uses the workbook validator and saves only to the signed-in account", async () => {
+  const bytes = await workbook(rows);
+  let requests = 0;
+  let deny = false;
+  await fixture(async ({ start, stop }) => {
+    let origin = await start();
+    let base = origin + "/travel";
+    const body = JSON.stringify({ url: "https://docs.google.com/spreadsheets/d/1XWJLkAwch5GXAt_7zOFDcg8Wm8Xv29_8PWuuW15qmAE/edit", title: "링크 여행" });
+    const headers = { ...clientHeader, "Content-Type": "application/json" };
+    const post = (cookie = "") => fetch(base + "/api/trips/from-google-sheet", { method: "POST", headers: { ...headers, Cookie: cookie }, body });
+    assert.equal((await post()).status, 401);
+    assert.equal(requests, 0);
+    const auth = await register(base, "link_traveler");
+    const other = await register(base, "other_traveler");
+    const forbidden = await fetch(base + "/api/trips/from-google-sheet", { method: "POST", headers: { Cookie: auth.cookie, "Content-Type": "application/json" }, body });
+    assert.equal(forbidden.status, 403);
+    assert.equal(requests, 0);
+    const imported = await post(auth.cookie);
+    assert.equal(imported.status, 201, await imported.clone().text());
+    const { trip } = await imported.json();
+    assert.equal(trip.title, "링크 여행");
+    assert.equal(trip.days[0].places[0].name, "시즈오카역");
+    assert.equal(requests, 1);
+    assert.deepEqual(await (await fetch(base + "/api/trips", { headers: { Cookie: other.cookie } })).json(), { trips: [] });
+    deny = true;
+    const rejected = await post(auth.cookie);
+    assert.equal(rejected.status, 400);
+    assert.match((await rejected.json()).error, /공유/);
+    await stop(); origin = await start(); base = origin + "/travel";
+    const restored = await (await fetch(base + "/api/trips", { headers: { Cookie: auth.cookie } })).json();
+    assert.equal(restored.trips.length, 1);
+    assert.equal(restored.trips[0].id, trip.id);
+  }, {
+    basePath: "/travel",
+    googleSheetFetcher: (url) => fetchGoogleSheet(url, { fetchImpl: async () => {
+      requests++;
+      return deny ? new Response("denied", { status: 403 }) : new Response(bytes, { headers: { "content-disposition": 'attachment; filename="public-trip.xlsx"' } });
+    } }),
+  });
+});
+
+test("Google import throttling is per account and failed workbooks are never stored", async () => {
+  let requests = 0;
+  await fixture(async ({ start }) => {
+    const base = await start();
+    const one = await register(base, "one_traveler");
+    const two = await register(base, "two_traveler");
+    const post = (cookie) => fetch(base + "/api/trips/from-google-sheet", {
+      method: "POST", headers: { ...clientHeader, Cookie: cookie, "Content-Type": "application/json" },
+      body: JSON.stringify({ url: "https://docs.google.com/spreadsheets/d/1XWJLkAwch5GXAt_7zOFDcg8Wm8Xv29_8PWuuW15qmAE/edit" }),
+    });
+    assert.equal((await post(one.cookie)).status, 400);
+    assert.equal((await post(one.cookie)).status, 429);
+    assert.equal((await post(two.cookie)).status, 400);
+    assert.equal(requests, 2);
+    assert.deepEqual(await (await fetch(base + "/api/trips", { headers: { Cookie: one.cookie } })).json(), { trips: [] });
+  }, { googleImportLimit: 1, googleSheetFetcher: async () => { requests++; return { buffer: Buffer.from("invalid"), filename: "bad.xlsx" }; } });
+});
 
 test("concurrent imports do not lose trips", async () =>
   fixture(async ({ start }) => {

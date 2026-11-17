@@ -7,11 +7,14 @@ import { createStore, root } from "./services/store.js";
 import { createAuth } from "./services/auth.js";
 import { parseExcel } from "./services/excel.js";
 import { HttpError } from "./utils/errors.js";
+import { fetchGoogleSheet } from "./services/google-sheets.js";
 
 export function createApp({
   dataDir = path.join(root, "data"),
   authLimit = 30,
   basePath = "",
+  googleSheetFetcher = fetchGoogleSheet,
+  googleImportLimit = 10,
 } = {}) {
   const app = express();
   const store = createStore(dataDir);
@@ -76,18 +79,7 @@ export function createApp({
         /\.xlsx$/i.test(file.originalname),
       ),
   });
-  app.post("/api/trips", upload.single("file"), async (req, res) => {
-    if (!req.file)
-      throw new HttpError(400, "업로드할 .xlsx 파일을 선택해 주세요.");
-    let filename = req.file.originalname;
-    // Multipart clients encode filenames as UTF-8; Busboy exposes legacy latin1 by default.
-    const decoded = Buffer.from(filename, "latin1").toString("utf8");
-    if (!decoded.includes("\uFFFD")) filename = decoded;
-    const parsed = await parseExcel(req.file.buffer, {
-      filename,
-      title: req.body?.title,
-      sheetName: req.body?.sheetName,
-    });
+  async function saveTrip(parsed, ownerId) {
     const now = new Date().toISOString();
     const trip = {
       ...parsed.itinerary,
@@ -97,13 +89,44 @@ export function createApp({
       updatedAt: now,
     };
     await store.update((db) => {
-      if (db.trips.filter((t) => t.ownerId === req.user.id).length >= 100)
+      if (db.trips.filter((t) => t.ownerId === ownerId).length >= 100)
         throw new HttpError(
           400,
           "여행은 계정당 최대 100개까지 저장할 수 있습니다.",
         );
-      db.trips.push({ ...trip, ownerId: req.user.id });
+      db.trips.push({ ...trip, ownerId });
     });
+    return trip;
+  }
+  app.post("/api/trips", upload.single("file"), async (req, res) => {
+    if (!req.file) throw new HttpError(400, "업로드할 .xlsx 파일을 선택해 주세요.");
+    let filename = req.file.originalname;
+    const decoded = Buffer.from(filename, "latin1").toString("utf8");
+    if (!decoded.includes("\uFFFD")) filename = decoded;
+    const parsed = await parseExcel(req.file.buffer, {
+      filename, title: req.body?.title, sheetName: req.body?.sheetName,
+    });
+    const trip = await saveTrip(parsed, req.user.id);
+    res.status(201).json({ trip });
+  });
+  const importLimiter = rateLimit({
+    windowMs: 15 * 60000, limit: googleImportLimit,
+    keyGenerator: (req) => req.user.id,
+    standardHeaders: "draft-8", legacyHeaders: false,
+    message: { error: "구글 시트 가져오기는 15분에 10번까지 가능합니다. 잠시 후 다시 시도해 주세요." },
+  });
+  app.post("/api/trips/from-google-sheet", importLimiter, async (req, res) => {
+    const { url, title = "" } = req.body || {};
+    if (typeof url !== "string" || !url.trim() || typeof title !== "string" || title.length > 80) {
+      throw new HttpError(400, "구글 시트 링크와 여행 이름(최대 80자)을 확인해 주세요.");
+    }
+    const db = await store.read();
+    if (db.trips.filter((t) => t.ownerId === req.user.id).length >= 100) {
+      throw new HttpError(400, "여행은 계정당 최대 100개까지 저장할 수 있습니다.");
+    }
+    const { buffer, filename } = await googleSheetFetcher(url);
+    const parsed = await parseExcel(buffer, { filename, title });
+    const trip = await saveTrip(parsed, req.user.id);
     res.status(201).json({ trip });
   });
   const owned = (db, req) => {

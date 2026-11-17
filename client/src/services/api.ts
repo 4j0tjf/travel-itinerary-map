@@ -61,3 +61,8 @@ export const uploadTrip = (file: File, title: string) => {
   data.append("title", title);
   return request<{ trip: Itinerary }>("/trips", { method: "POST", body: data });
 };
+export const importGoogleSheet = (url: string, title: string) =>
+  request<{ trip: Itinerary }>("/trips/from-google-sheet", {
+    method: "POST",
+    body: JSON.stringify({ url, title }),
+  });

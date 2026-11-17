@@ -205,6 +205,39 @@ describe("guide and private travel collection", () => {
     expect(calls.some((c) => c.options?.method === "DELETE")).toBe(true);
   });
 
+  it("imports a Google sheet link and preserves it when sharing access fails", async () => {
+    const imports: { url: string; title: string }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/api/auth/me") return response({ user });
+      if (url === "/api/trips") return response({ trips: [] });
+      if (url === "/api/trips/from-google-sheet") {
+        imports.push(JSON.parse(options?.body as string));
+        return imports.length === 1
+          ? response({ error: "공유 설정을 확인해 주세요." }, 400)
+          : response({ trip: itinerary }, 201);
+      }
+      throw new Error("Unexpected API request " + url);
+    }));
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "전체 일정" }));
+    await screen.findByText("아직 등록된 여행이 없어요.");
+    fireEvent.click(screen.getByRole("button", { name: "첫 여행 일정 불러오기" }));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("tab", { name: "구글 시트 링크" }));
+    expect(dialog.querySelector("input[type=file]")).toBeNull();
+    const link = "https://docs.google.com/spreadsheets/d/1XWJLkAwch5GXAt_7zOFDcg8Wm8Xv29_8PWuuW15qmAE/edit";
+    fireEvent.change(screen.getByLabelText("구글 스프레드시트 링크"), { target: { value: link } });
+    fireEvent.change(screen.getByLabelText(/여행 이름/), { target: { value: "시즈오카" } });
+    fireEvent.submit(dialog.querySelector("form")!);
+    expect(await within(dialog).findByRole("alert")).toBeTruthy();
+    expect((screen.getByLabelText("구글 스프레드시트 링크") as HTMLInputElement).value).toBe(link);
+    expect(screen.getByText("가져온 뒤 원본 시트를 수정해도 저장된 여행은 바뀌지 않습니다.")).toBeTruthy();
+    fireEvent.submit(dialog.querySelector("form")!);
+    await screen.findByRole("tab", { name: /시즈오카/, selected: true });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(imports).toEqual([{ url: link, title: "시즈오카" }, { url: link, title: "시즈오카" }]);
+  });
+
   it("registers through the account form and opens an empty personal collection", async () => {
     const fetchMock = vi.fn(async (url: string) => {
       if (url === "/api/auth/me") return response({ user: null });

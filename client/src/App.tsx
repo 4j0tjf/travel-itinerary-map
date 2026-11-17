@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   Info,
   Leaf,
+  Link2,
   List,
   LoaderCircle,
   LogIn,
@@ -29,6 +30,7 @@ import {
   deleteTrip,
   getMe,
   getTrips,
+  importGoogleSheet,
   logout,
   renameTrip,
   uploadTrip,
@@ -62,6 +64,8 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [importMode, setImportMode] = useState<"file" | "google">("file");
+  const [sheetUrl, setSheetUrl] = useState("");
   const [uploadAfterLogin, setUploadAfterLogin] = useState(false);
   const [model, setModel] = useState<"ChatGPT" | "Claude">("ChatGPT");
   const [copied, setCopied] = useState(false);
@@ -151,6 +155,8 @@ export default function App() {
   const showUpload = () => {
     setTitle("");
     setFile(null);
+    setImportMode("file");
+    setSheetUrl("");
     if (user) open("upload");
     else {
       setUploadAfterLogin(true);
@@ -185,18 +191,25 @@ export default function App() {
   }
   async function submitUpload(event: FormEvent) {
     event.preventDefault();
-    if (!file) {
+    if (importMode === "file" && !file) {
       setModalError(".xlsx 파일을 선택해 주세요.");
+      return;
+    }
+    if (importMode === "google" && !sheetUrl.trim()) {
+      setModalError("구글 스프레드시트 링크를 입력해 주세요.");
       return;
     }
     setBusy(true);
     setModalError("");
     setDetails([]);
     try {
-      const { trip } = await uploadTrip(file, title);
+      const { trip } = importMode === "google"
+        ? await importGoogleSheet(sheetUrl.trim(), title)
+        : await uploadTrip(file!, title);
       setTrips((previous) => [...previous, trip]);
       setModal(null);
       setFile(null);
+      setSheetUrl("");
       navigate("trips/" + trip.id);
       setToast(
         `${trip.title} 여행을 저장했어요.${trip.warnings.length ? " 가져오기 안내를 확인해 주세요." : ""}`,
@@ -413,14 +426,14 @@ export default function App() {
               <span>02</span>
               <div>
                 <strong>스프레드시트로 저장</strong>
-                <p>완성된 일정을 .xlsx 파일로 준비하세요.</p>
+                <p>.xlsx 파일이나 구글 스프레드시트 링크를 준비하세요.</p>
               </div>
             </div>
             <div>
               <span>03</span>
               <div>
                 <strong>나의 여행 지도 완성</strong>
-                <p>로그인 후 파일을 올리면 여행 탭이 생겨요.</p>
+                <p>로그인 후 파일 또는 시트 링크로 여행을 가져오세요.</p>
               </div>
             </div>
           </section>
@@ -740,11 +753,25 @@ export default function App() {
           ) : modal === "upload" ? (
             <>
               <p>
-                여행 한 개당 .xlsx 파일 하나를 올려 주세요.
+                Excel 파일 또는 구글 스프레드시트 링크로 가져오세요.
                 <br />
-                파일 이름이나 ‘여행명’ 컬럼으로 여행 탭이 만들어집니다.
+                가져온 내용을 복사해 나의 여행으로 저장합니다.
               </p>
+              <div className="import-methods" role="tablist" aria-label="가져오기 방식">
+                <button type="button" role="tab" id="file-import-tab" aria-selected={importMode === "file"}
+                  aria-controls="file-import-panel" disabled={busy}
+                  onClick={() => { setImportMode("file"); setModalError(""); setDetails([]); }}>
+                  <FileSpreadsheet size={16} /> Excel 파일
+                </button>
+                <button type="button" role="tab" id="google-import-tab" aria-selected={importMode === "google"}
+                  aria-controls="google-import-panel" disabled={busy}
+                  onClick={() => { setImportMode("google"); setModalError(""); setDetails([]); }}>
+                  <Link2 size={16} /> 구글 시트 링크
+                </button>
+              </div>
               <form onSubmit={submitUpload} className="app-form">
+                {importMode === "file" ? (
+                <div id="file-import-panel" role="tabpanel" aria-labelledby="file-import-tab">
                 <label htmlFor="trip-file" className="file-drop">
                   <FileSpreadsheet size={32} />
                   <strong>{file ? file.name : "Excel 파일 선택하기"}</strong>
@@ -762,6 +789,22 @@ export default function App() {
                     required
                   />
                 </label>
+                </div>
+                ) : (
+                <div id="google-import-panel" role="tabpanel" aria-labelledby="google-import-tab" className="google-import-fields">
+                  <label htmlFor="google-sheet-url">구글 스프레드시트 링크</label>
+                  <input id="google-sheet-url" type="url" value={sheetUrl} disabled={busy}
+                    onChange={(event) => { setSheetUrl(event.target.value); setModalError(""); setDetails([]); }}
+                    placeholder="https://docs.google.com/spreadsheets/d/…" maxLength={2048} required
+                    aria-describedby="google-sharing-help" />
+                  <div id="google-sharing-help" className="google-sharing-help">
+                    <strong>시트의 공유 설정을 확인해 주세요.</strong>
+                    공유 → 일반 액세스 → ‘링크가 있는 모든 사용자’ · 뷰어
+                    <span>다운로드가 허용된 시트만 가져올 수 있어요. 비공개 시트는 Excel로 내려받아 파일로 올려 주세요.</span>
+                    <span>가져온 뒤 원본 시트를 수정해도 저장된 여행은 바뀌지 않습니다.</span>
+                  </div>
+                </div>
+                )}
                 <label htmlFor="upload-title">
                   여행 이름 <span className="optional-label">선택</span>
                 </label>
@@ -771,7 +814,7 @@ export default function App() {
                   maxLength={80}
                   disabled={busy}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="예: 시즈오카 · 비우면 파일/여행명 사용"
+                  placeholder={importMode === "file" ? "예: 시즈오카 · 비우면 파일/여행명 사용" : "예: 시즈오카 · 비우면 시트/여행명 사용"}
                 />
                 <div className="upload-help">
                   필수: 날짜 · 시간 · 장소명 · 주소 또는 위도/경도
@@ -790,13 +833,13 @@ export default function App() {
                     )}
                   </div>
                 )}
-                <button className="primary-button" disabled={busy || !file}>
+                <button className="primary-button" disabled={busy || (importMode === "file" ? !file : !sheetUrl.trim())}>
                   {busy ? (
                     <LoaderCircle className="spinning" size={16} />
                   ) : (
                     <Upload size={16} />
                   )}{" "}
-                  {busy ? "일정 확인 및 저장 중…" : "여행 일정 저장하기"}
+                  {busy ? "일정 확인 및 저장 중…" : importMode === "google" ? "구글 시트 가져오기" : "여행 일정 저장하기"}
                 </button>
               </form>
               <a

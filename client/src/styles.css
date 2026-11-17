@@ -11,6 +11,50 @@
   --border: #e6e9e0;
   --cream: #fafbf7;
 }
+.import-methods {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 5px;
+  margin: 18px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--sage);
+}
+.import-methods button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 6px;
+  border-radius: 8px;
+  background: transparent;
+  color: #657368;
+  font-size: 12px;
+  font-weight: 600;
+}
+.import-methods button[aria-selected="true"] {
+  color: var(--green);
+  background: white;
+  box-shadow: 0 1px 4px #28574814;
+}
+.google-import-fields {
+  display: grid;
+  gap: 10px;
+}
+.google-sharing-help {
+  display: grid;
+  gap: 7px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--cream);
+  color: #657368;
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.google-sharing-help strong { color: var(--green); }
 * {
   box-sizing: border-box;
 }
