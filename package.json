@@ -1,6 +1,6 @@
 {
   "name": "travel-itinerary-map",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -11,10 +11,11 @@
     "dev": "node scripts/dev.mjs",
     "build": "npm run build -w client",
     "start": "npm run start -w server",
-    "test": "node --test server/test/*.test.js",
-    "sample": "node sample/generate.mjs"
+    "test": "npm run test:server && npm run test -w client",
+    "sample": "node sample/generate.mjs",
+    "test:server": "node --test server/test/*.test.js"
   },
-  "devDependencies": {
-    "exceljs": "^4.4.0"
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
