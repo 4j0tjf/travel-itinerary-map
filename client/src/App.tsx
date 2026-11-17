@@ -38,6 +38,7 @@ import {
 import { itineraryPrompt } from "./services/prompts";
 import Dialog from "./components/Dialog";
 import TripPlanner from "./components/TripPlanner";
+import RecommendationGuide from "./components/RecommendationGuide";
 
 type Modal = "login" | "register" | "upload" | "rename" | "delete" | null;
 const errorMessage = (error: unknown) =>
@@ -418,15 +419,15 @@ export default function App() {
             <div>
               <span>01</span>
               <div>
-                <strong>AI에게 여행 일정 요청</strong>
-                <p>아래 프롬프트를 복사하고 여행 정보를 채워 주세요.</p>
+                <strong>기존 일정 또는 여행 정보 입력</strong>
+                <p>아래 프롬프트에 기존 일정과 여행 조건을 붙여 주세요.</p>
               </div>
             </div>
             <div>
               <span>02</span>
               <div>
-                <strong>스프레드시트로 저장</strong>
-                <p>.xlsx 파일이나 구글 스프레드시트 링크를 준비하세요.</p>
+                <strong>일정·장소·호텔을 세 시트로</strong>
+                <p>읽기 편한 Excel 파일 또는 구글 시트 링크를 준비하세요.</p>
               </div>
             </div>
             <div>
@@ -441,10 +442,10 @@ export default function App() {
             <div className="prompt-section-title">
               <div>
                 <span className="page-eyebrow">START WITH A GOOD PLAN</span>
-                <h2>복사하고, 여행 정보만 채워 주세요.</h2>
+                <h2>일정과 추천까지, 읽기 편한 세 시트로.</h2>
                 <p>
-                  ChatGPT·Claude에 붙여 넣으면 업로드 양식에 맞춰 일정을 정리할
-                  수 있어요.
+                  ChatGPT·Claude에 기존 일정과 함께 붙여 넣으세요. 일정은 유지하고,
+                  가볼 만한 곳과 호텔 후보까지 비교표로 정리합니다.
                 </p>
               </div>
               <a
@@ -453,7 +454,7 @@ export default function App() {
                 download="itinerary.xlsx"
               >
                 <ArrowDownToLine size={15} />
-                샘플 Excel 양식
+                일정 업로드용 샘플 Excel
               </a>
             </div>
             <div className="prompt-card">
@@ -505,6 +506,7 @@ export default function App() {
               </div>
             </div>
           </section>
+          <RecommendationGuide />
           <section className="guide-notes">
             <div>
               <FileSpreadsheet size={23} />

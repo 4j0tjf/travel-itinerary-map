@@ -116,12 +116,21 @@ describe("guide and private travel collection", () => {
     );
     expect(screen.getByRole("button", { name: "가이드" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "전체 일정" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "추천 점수와 채점 기준" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "세 개의 시트, 한눈에 읽는 여행 계획" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "프롬프트 복사" }));
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith(
         expect.stringContaining("ChatGPT에서"),
       ),
     );
+    const copied = writeText.mock.lastCall?.[0] as string;
+    expect(copied).toContain("1. '여행 일정'");
+    expect(copied).toContain("2. '가볼 만한 곳'");
+    expect(copied).toContain("3. '호텔 추천'");
+    expect(copied).toContain("본문 12pt 이상");
+    expect(copied).toContain("확정한 날짜·항공·숙소·방문지는 유지");
+    expect(copied).toContain("세부 점수·점수 근거·채점 기준·가정·출처 모음용 탭을 생성하지 마세요");
     fireEvent.click(screen.getByRole("tab", { name: "Claude" }));
     fireEvent.click(screen.getByRole("button", { name: "프롬프트 복사" }));
     await waitFor(() =>

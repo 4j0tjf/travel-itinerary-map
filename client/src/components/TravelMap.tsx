@@ -64,6 +64,7 @@ export default function TravelMap({
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [aspect, setAspect] = useState(1.3);
+  const [viewportWidth, setViewportWidth] = useState(1000);
   const [terrain, setTerrain] = useState(false);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null,
@@ -116,7 +117,10 @@ export default function TravelMap({
     if (!host.current) return;
     const observer = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
-      if (width && height) setAspect(width / height);
+      if (width && height) {
+        setAspect(width / height);
+        setViewportWidth(width);
+      }
     });
     observer.observe(host.current);
     return () => observer.disconnect();
@@ -353,6 +357,11 @@ export default function TravelMap({
             if (!hasCoordinates(p)) return null;
             const point = project(p),
               active = p.id === selectedId;
+            const pinScale = width / viewportWidth;
+            const labelText = p.name.length > 16 ? p.name.slice(0, 15) + "…" : p.name;
+            const labelWidth = Math.min(labelText.length * 14 + 20, 260);
+            const labelOnLeft = (point.x - (500 - width / 2 + pan.x)) / width > 0.58;
+            const labelY = viewportWidth < 600 ? -62 : -17;
             return (
               <g
                 key={p.id}
@@ -362,7 +371,7 @@ export default function TravelMap({
                 aria-label={`${i + 1}. ${p.name}`}
                 aria-pressed={active}
                 className="map-pin"
-                transform={`translate(${point.x} ${point.y})`}
+                transform={`translate(${point.x} ${point.y}) scale(${pinScale})`}
                 onClick={() => onSelect(p.id)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -384,22 +393,25 @@ export default function TravelMap({
                   y="5"
                   fill={active ? "white" : "#285748"}
                   fontSize="14"
+                  style={{ fontSize: 14 }}
                   fontWeight="700"
                 >
                   {i + 1}
                 </text>
+                {(viewportWidth >= 600 || active) && <>
                 <rect
-                  x="25"
-                  y="-14"
-                  width={Math.min(p.name.length * 8 + 18, 180)}
-                  height="28"
+                  x={labelOnLeft ? -labelWidth - 26 : 26}
+                  y={labelY}
+                  width={labelWidth}
+                  height="34"
                   rx="6"
                   fill="#fffefa"
                   filter="url(#pin-shadow)"
                 />
-                <text x="34" y="4" fill="#4c6043" fontSize="10">
-                  {p.name.length > 20 ? p.name.slice(0, 19) + "…" : p.name}
+                <text x={labelOnLeft ? -labelWidth - 16 : 36} y={labelY + 22} fill="#344a35" style={{ fontSize: 14 }}>
+                  {labelText}
                 </text>
+                </>}
               </g>
             );
           })}

@@ -30,7 +30,7 @@
   border-radius: 8px;
   background: transparent;
   color: #657368;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
 }
 .import-methods button[aria-selected="true"] {
@@ -50,7 +50,7 @@
   border-radius: 10px;
   background: var(--cream);
   color: #657368;
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1.7;
   overflow-wrap: anywhere;
 }
@@ -135,7 +135,7 @@ button:hover {
 }
 .brand-sub {
   display: block;
-  font-size: 7px;
+  font-size: 14px;
   letter-spacing: 1.5px;
   font-weight: 500;
   margin-top: 5px;
@@ -151,7 +151,7 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
+  font-size: 16px;
   color: #828a80;
   white-space: nowrap;
 }
@@ -166,7 +166,7 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 17px;
   color: #8b9189;
   position: relative;
   padding: 0 2px;
@@ -192,7 +192,7 @@ button:hover {
   align-items: center;
 }
 .personal-label {
-  font-size: 11px;
+  font-size: 15px;
   color: #8b9387;
   display: flex;
   gap: 7px;
@@ -214,7 +214,7 @@ button:hover {
   display: flex;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 500;
   border-radius: 7px;
   white-space: nowrap;
@@ -226,7 +226,7 @@ button:hover {
   background: #edeedd;
   border: 3px solid #f6f7ef;
   color: #737856;
-  font-size: 13px;
+  font-size: 17px;
   font-family: Georgia, serif;
 }
 .trip-heading {
@@ -242,7 +242,7 @@ button:hover {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 10px;
+  font-size: 14px;
   color: #949a8f;
   margin-bottom: 8px;
 }
@@ -262,7 +262,7 @@ h1 {
   line-height: 1.5;
 }
 .sample-badge {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 500;
   border: 1px solid #e0e7d9;
   background: #eff3e9;
@@ -276,7 +276,7 @@ h1 {
   gap: 10px;
   align-items: center;
   margin-top: 9px;
-  font-size: 11px;
+  font-size: 15px;
   color: #8b9387;
 }
 .trip-metadata > span {
@@ -299,7 +299,7 @@ h1 {
   gap: 6px;
   align-items: center;
   color: #8b9685;
-  font-size: 11px;
+  font-size: 15px;
   margin-right: 13px;
 }
 .favorite-button {
@@ -380,7 +380,7 @@ h1 {
   gap: 5px;
 }
 .date-tab > span:nth-child(2) {
-  font-size: 12px;
+  font-size: 16px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -388,12 +388,12 @@ h1 {
   font-weight: 500;
 }
 .date-tab small {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 400;
   color: #a0a58e;
 }
 .day-tab-label {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 650;
   letter-spacing: 1.4px;
   color: #9ba28e;
@@ -471,7 +471,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 14px;
   color: #79836f;
   pointer-events: none;
 }
@@ -553,11 +553,11 @@ h1 {
   min-width: 0;
 }
 .map-place-preview span {
-  font-size: 9px;
+  font-size: 14px;
   color: #9aa08e;
 }
 .map-place-preview strong {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 550;
   white-space: nowrap;
   overflow: hidden;
@@ -590,7 +590,7 @@ h1 {
   border: 1px solid #e2e7d6;
   border-radius: 5px;
   color: #6c7d60;
-  font-size: 9px;
+  font-size: 14px;
   white-space: nowrap;
 }
 .mode-link {
@@ -603,7 +603,7 @@ h1 {
   border-left: 1px solid #e0e5d5;
 }
 .map-disclaimer {
-  font-size: 8px;
+  font-size: 14px;
   color: #88947c;
   background: #edf0e6b8;
   padding: 4px 5px;
@@ -636,12 +636,12 @@ h1 {
   gap: 4px;
 }
 .journey-note strong {
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 500;
   color: #64705b;
 }
 .journey-note > div > span {
-  font-size: 9px;
+  font-size: 14px;
   color: #a0a795;
 }
 .journey-note-count {
@@ -649,7 +649,7 @@ h1 {
   display: flex;
   gap: 11px;
   align-items: center;
-  font-size: 8px;
+  font-size: 14px;
   letter-spacing: 1.4px;
   color: #8b987c;
 }
@@ -705,7 +705,7 @@ h1 {
   display: flex;
   gap: 5px;
   align-items: center;
-  font-size: 8px;
+  font-size: 14px;
   color: #fff;
   letter-spacing: 1.4px;
   z-index: 3;
@@ -721,7 +721,7 @@ h1 {
   z-index: 3;
 }
 .hero-text > span {
-  font-size: 7px;
+  font-size: 14px;
   letter-spacing: 2.1px;
   color: #e7ecde;
 }
@@ -741,7 +741,7 @@ h1 {
   z-index: 3;
 }
 .hero-day > span {
-  font-size: 10px;
+  font-size: 14px;
   color: #d6dec9;
   margin-left: 4px;
 }
@@ -753,11 +753,11 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
+  font-size: 14px;
   color: #959b8f;
 }
 .day-eyebrow > span:first-child {
-  font-size: 9px;
+  font-size: 14px;
   color: #6d8568;
   letter-spacing: 1.4px;
   font-weight: 650;
@@ -769,7 +769,7 @@ h1 {
   margin: 9px 0 7px;
 }
 .day-heading > p {
-  font-size: 10px;
+  font-size: 14px;
   color: #92998a;
   margin: 0;
   line-height: 1.6;
@@ -780,7 +780,7 @@ h1 {
   align-items: center;
   margin-top: 19px;
   color: #87917d;
-  font-size: 9px;
+  font-size: 14px;
   white-space: nowrap;
 }
 .day-stats > span,
@@ -792,7 +792,7 @@ h1 {
 .day-stats > button {
   margin-left: auto;
   background: none;
-  font-size: 9px;
+  font-size: 14px;
   color: #70896b;
   padding: 0;
 }
@@ -803,7 +803,7 @@ h1 {
 .schedule-label {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
+  font-size: 14px;
   color: #b0b5a9;
   letter-spacing: 0.1px;
   margin-bottom: 20px;
@@ -812,7 +812,7 @@ h1 {
 .schedule-label > span:first-child {
   color: #67775d;
   font-weight: 550;
-  font-size: 10px;
+  font-size: 14px;
 }
 .schedule-item {
   display: flex;
@@ -837,7 +837,7 @@ h1 {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  font-size: 9px;
+  font-size: 14px;
   z-index: 1;
   transition: all 0.2s;
 }
@@ -874,19 +874,19 @@ h1 {
   gap: 3px;
 }
 .place-time {
-  font-size: 11px;
+  font-size: 15px;
   color: #56654d;
   letter-spacing: 0.1px;
   font-weight: 600;
   white-space: nowrap;
 }
 .place-time > span {
-  font-size: 9px;
+  font-size: 14px;
   color: #a4ac9b;
   font-weight: 400;
 }
 .category {
-  font-size: 8px;
+  font-size: 14px;
   background: #eef2e7;
   color: #7c8c6d;
   border-radius: 3px;
@@ -911,7 +911,7 @@ h1 {
   min-width: 0;
 }
 .place-card-body h3 {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 550;
   letter-spacing: -0.45px;
   margin: 0 0 5px;
@@ -919,14 +919,14 @@ h1 {
   color: #3b4835;
 }
 .japanese-name {
-  font-size: 8px;
+  font-size: 14px;
   color: #a1a695;
   margin: 0;
   letter-spacing: 0.6px;
 }
 .short-memo {
   margin: 8px 0 0;
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.65;
   color: #9ca491;
   display: -webkit-box;
@@ -968,7 +968,7 @@ h1 {
   display: flex;
   align-items: flex-start;
   gap: 5px;
-  font-size: 8px;
+  font-size: 14px;
   color: #9ba38f;
   margin: 0 0 8px;
   line-height: 1.6;
@@ -978,7 +978,7 @@ h1 {
   margin-top: 1px;
 }
 .place-memo {
-  font-size: 10px;
+  font-size: 14px;
   color: #7f8d72;
   line-height: 1.8;
   word-break: keep-all;
@@ -989,12 +989,12 @@ h1 {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 14px;
   color: #5e7b53;
   width: max-content;
 }
 .travel-leg {
-  font-size: 8px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1017,7 +1017,7 @@ h1 {
   gap: 7px;
   border-top: 1px solid var(--border);
   padding: 18px 25px;
-  font-size: 8px;
+  font-size: 14px;
   color: #b0b8a4;
 }
 .panel-footer > span:last-child {
@@ -1044,7 +1044,7 @@ h1 {
   margin: 20px 0 5px;
 }
 .state-page p {
-  font-size: 13px;
+  font-size: 17px;
   color: #919b89;
 }
 .state-page .primary-button {
@@ -1073,7 +1073,7 @@ h1 {
   display: flex;
   gap: 10px;
   align-items: center;
-  font-size: 12px;
+  font-size: 16px;
   max-width: 90%;
   white-space: nowrap;
 }
@@ -1120,7 +1120,7 @@ h1 {
 }
 .modal-eyebrow {
   display: block;
-  font-size: 8px;
+  font-size: 14px;
   letter-spacing: 2px;
   color: #94a17f;
   font-weight: 600;
@@ -1132,7 +1132,7 @@ h1 {
   margin: 10px 0 8px;
 }
 .modal > p {
-  font-size: 12px;
+  font-size: 16px;
   color: #939c89;
   line-height: 1.8;
   margin: 0 0 24px;
@@ -1150,18 +1150,18 @@ h1 {
   color: #91a37f;
 }
 .upload-placeholder strong {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 500;
   color: #6f825f;
 }
 .upload-placeholder > span {
-  font-size: 9px;
+  font-size: 14px;
   color: #a0aa92;
 }
 .column-preview {
   padding: 19px 0;
   color: #a5ae99;
-  font-size: 10px;
+  font-size: 14px;
 }
 .column-preview > span {
   color: #7f8d71;
@@ -1179,14 +1179,14 @@ h1 {
   gap: 10px;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 16px;
   border-radius: 7px;
   width: 100%;
 }
 .modal-footnote {
   display: block;
   text-align: center;
-  font-size: 9px;
+  font-size: 14px;
   color: #a8b09c;
   margin-top: 13px;
 }
@@ -1197,7 +1197,7 @@ h1 {
   padding: 13px;
   background: #f0f4e9;
   border-radius: 7px;
-  font-size: 10px;
+  font-size: 14px;
   color: #80946e;
 }
 .setup-status > span:last-child {
@@ -1205,7 +1205,7 @@ h1 {
   color: #a0ad91;
 }
 .modal h3 {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 550;
   margin: 24px 0 15px;
 }
@@ -1214,12 +1214,12 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  font-size: 11px;
+  font-size: 15px;
   color: #87957b;
   line-height: 1.8;
 }
 .setup-steps code {
-  font-size: 10px;
+  font-size: 14px;
   background: #eef2e7;
   padding: 2px 3px;
   border-radius: 3px;
@@ -1229,7 +1229,7 @@ h1 {
   padding: 9px;
   margin-top: 7px;
   overflow-wrap: anywhere;
-  font-size: 9px;
+  font-size: 14px;
 }
 .info-note {
   display: flex;
@@ -1247,7 +1247,7 @@ h1 {
   margin-top: 2px;
 }
 .info-note p {
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.8;
   margin: 0;
 }
@@ -1281,7 +1281,7 @@ h1 {
   min-width: 0;
 }
 .overview-day > div > span {
-  font-size: 9px;
+  font-size: 14px;
   color: #a0aa92;
 }
 .overview-day strong {
@@ -1291,7 +1291,7 @@ h1 {
   margin: 6px 0 7px;
 }
 .overview-day p {
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.8;
   color: #9aa68a;
   margin: 0;
@@ -1304,7 +1304,7 @@ h1 {
   align-items: center;
   gap: 8px;
   color: #a1af91;
-  font-size: 10px;
+  font-size: 14px;
   border-top: 1px solid var(--border);
   padding-top: 19px;
 }
@@ -1313,7 +1313,7 @@ h1 {
   text-align: center;
   padding: 45px 20px;
   color: #88967e;
-  font-size: 13px;
+  font-size: 17px;
 }
 .google-info {
   max-width: 220px;
@@ -1322,10 +1322,10 @@ h1 {
   font-family: "Noto Sans KR", sans-serif;
 }
 .google-info strong {
-  font-size: 13px;
+  font-size: 17px;
 }
 .google-info p {
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1.7;
 }
 @keyframes fade-in {
@@ -1359,10 +1359,10 @@ h1 {
     padding: 23px 30px 12px;
   }
   .place-card-body h3 {
-    font-size: 13px;
+    font-size: 17px;
   }
   .place-memo {
-    font-size: 11px;
+    font-size: 15px;
   }
   .photo-wrap {
     width: 67px;
@@ -1370,7 +1370,7 @@ h1 {
     min-width: 67px;
   }
   .place-time {
-    font-size: 12px;
+    font-size: 16px;
   }
   .map-place-preview {
     bottom: 72px;
@@ -1382,7 +1382,7 @@ h1 {
     margin: 19px 0 23px;
   }
   .day-stats {
-    font-size: 10px;
+    font-size: 14px;
   }
 }
 @media (max-width: 1100px) {
@@ -1445,18 +1445,18 @@ h1 {
     gap: 5px;
   }
   .map-disclaimer {
-    font-size: 7px;
+    font-size: 14px;
   }
   .journey-note {
     padding-left: 19px;
     padding-right: 19px;
   }
   .journey-note-count {
-    font-size: 7px;
+    font-size: 14px;
     gap: 6px;
   }
   .map-place-preview strong {
-    font-size: 11px;
+    font-size: 15px;
   }
   .trip-title-row h1 {
     font-size: 23px;
@@ -1490,7 +1490,7 @@ h1 {
     font-size: 21px;
   }
   .brand-sub {
-    font-size: 6px;
+    font-size: 14px;
     letter-spacing: 1.1px;
   }
   .primary-nav {
@@ -1498,7 +1498,7 @@ h1 {
     gap: 18px;
   }
   .primary-nav button {
-    font-size: 11px;
+    font-size: 15px;
     gap: 6px;
   }
   .primary-nav button > svg {
@@ -1529,7 +1529,7 @@ h1 {
     position: relative;
   }
   .breadcrumbs {
-    font-size: 9px;
+    font-size: 14px;
     margin-bottom: 8px;
   }
   .trip-title-row {
@@ -1540,11 +1540,11 @@ h1 {
     letter-spacing: -1px;
   }
   .sample-badge {
-    font-size: 7px;
+    font-size: 14px;
     padding: 3px 5px;
   }
   .trip-metadata {
-    font-size: 9px;
+    font-size: 14px;
     gap: 8px;
     flex-wrap: wrap;
     margin-top: 10px;
@@ -1602,19 +1602,19 @@ h1 {
     padding: 10px 13px 11px;
   }
   .day-tab-label {
-    font-size: 8px;
+    font-size: 14px;
     letter-spacing: 1px;
   }
   .date-tab > span:nth-child(2) {
-    font-size: 11px;
+    font-size: 15px;
     gap: 5px;
   }
   .date-tab small {
-    font-size: 8px;
+    font-size: 14px;
   }
   .map-location {
     top: 108px;
-    font-size: 9px;
+    font-size: 14px;
     left: 20px;
   }
   .map-tools {
@@ -1645,10 +1645,10 @@ h1 {
     width: 20px;
   }
   .map-place-preview span {
-    font-size: 8px;
+    font-size: 14px;
   }
   .map-place-preview strong {
-    font-size: 10px;
+    font-size: 14px;
   }
   .map-place-preview > button {
     margin-left: 0;
@@ -1660,7 +1660,7 @@ h1 {
     right: 17px;
   }
   .map-mode {
-    font-size: 8px;
+    font-size: 14px;
     padding: 6px 8px;
   }
   .mode-link {
@@ -1668,7 +1668,7 @@ h1 {
     padding-left: 7px;
   }
   .map-disclaimer {
-    font-size: 6px;
+    font-size: 14px;
     max-width: 42%;
   }
   .journey-note {
@@ -1692,7 +1692,7 @@ h1 {
     position: relative;
     align-items: center;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 500;
     color: #64735a;
   }
@@ -1736,30 +1736,30 @@ h1 {
     padding: 23px 23px 18px;
   }
   .day-eyebrow {
-    font-size: 10px;
+    font-size: 14px;
   }
   .day-heading h2 {
     font-size: 20px;
   }
   .day-heading > p {
-    font-size: 11px;
+    font-size: 15px;
   }
   .day-stats {
-    font-size: 10px;
+    font-size: 14px;
     gap: 17px;
   }
   .day-stats > button {
-    font-size: 9px;
+    font-size: 14px;
   }
   .schedule-list {
     padding: 23px 24px 12px;
   }
   .schedule-label {
-    font-size: 10px;
+    font-size: 14px;
     margin-bottom: 24px;
   }
   .schedule-label > span:first-child {
-    font-size: 11px;
+    font-size: 15px;
   }
   .schedule-item {
     gap: 14px;
@@ -1768,23 +1768,23 @@ h1 {
   .timeline-number {
     width: 22px;
     height: 22px;
-    font-size: 10px;
+    font-size: 14px;
   }
   .place-time {
-    font-size: 12px;
+    font-size: 16px;
   }
   .place-time > span {
-    font-size: 10px;
+    font-size: 14px;
   }
   .category {
-    font-size: 9px;
+    font-size: 14px;
     padding: 4px 7px;
   }
   .place-card-body h3 {
     font-size: 14px;
   }
   .japanese-name {
-    font-size: 9px;
+    font-size: 14px;
   }
   .photo-wrap {
     width: 68px;
@@ -1795,23 +1795,23 @@ h1 {
     padding: 12px;
   }
   .place-address {
-    font-size: 9px;
+    font-size: 14px;
   }
   .place-memo {
-    font-size: 11px;
+    font-size: 15px;
   }
   .place-details > a {
-    font-size: 10px;
+    font-size: 14px;
   }
   .short-memo {
-    font-size: 10px;
+    font-size: 14px;
   }
   .travel-leg {
-    font-size: 9px;
+    font-size: 14px;
     margin: 18px 0 24px;
   }
   .panel-footer {
-    font-size: 9px;
+    font-size: 14px;
     padding: 21px 24px;
   }
   .modal-backdrop {
@@ -1829,21 +1829,21 @@ h1 {
     padding: 25px 10px;
   }
   .upload-placeholder > span {
-    font-size: 8px;
+    font-size: 14px;
   }
   .upload-placeholder strong {
-    font-size: 11px;
+    font-size: 15px;
   }
   .setup-steps {
-    font-size: 10px;
+    font-size: 14px;
   }
   .setup-status {
-    font-size: 9px;
+    font-size: 14px;
     gap: 7px;
   }
   .toast {
     bottom: 19px;
-    font-size: 11px;
+    font-size: 15px;
     padding: 12px 16px;
   }
   .state-page {
@@ -1853,10 +1853,10 @@ h1 {
     gap: 14px;
   }
   .overview-day strong {
-    font-size: 13px;
+    font-size: 17px;
   }
   .overview-day p {
-    font-size: 9px;
+    font-size: 14px;
   }
   .overview-day-number {
     font-size: 22px;
@@ -1889,7 +1889,7 @@ textarea {
   gap: 6px;
   padding: 8px 0;
   background: none;
-  font-size: 11px;
+  font-size: 15px;
   color: #7d8b73;
   white-space: nowrap;
 }
@@ -1900,17 +1900,17 @@ textarea {
   padding: 11px 25px;
   background: #f7eee1;
   color: #9d7d52;
-  font-size: 12px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 .connection-banner button {
   background: none;
   text-decoration: underline;
   margin-left: auto;
-  font-size: 11px;
+  font-size: 15px;
 }
 .page-eyebrow {
-  font-size: 9px;
+  font-size: 14px;
   letter-spacing: 1.8px;
   color: #8fa17d;
   font-weight: 550;
@@ -1946,7 +1946,7 @@ textarea {
   color: #3b6d4f;
 }
 .guide-intro-copy > p {
-  font-size: 13px;
+  font-size: 17px;
   line-height: 2;
   color: #95a087;
   margin: 0;
@@ -1959,7 +1959,7 @@ textarea {
 }
 .guide-intro-actions .primary-button {
   width: auto;
-  font-size: 11px;
+  font-size: 15px;
   padding: 12px 16px;
   gap: 17px;
 }
@@ -1967,7 +1967,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 14px;
   color: #9ba78e;
   white-space: nowrap;
 }
@@ -2025,7 +2025,7 @@ textarea {
   height: 25px;
   display: grid;
   place-items: center;
-  font-size: 9px;
+  font-size: 14px;
 }
 .postcard-route > span:nth-child(3) {
   transform: translateY(-14px);
@@ -2043,7 +2043,7 @@ textarea {
 }
 .guide-postcard > span:not(.postcard-stamp) {
   display: block;
-  font-size: 6px;
+  font-size: 14px;
   letter-spacing: 1.8px;
   color: #a3ae92;
   margin: 19px 9px 8px;
@@ -2056,7 +2056,7 @@ textarea {
   margin: 0 9px;
 }
 .guide-postcard > p {
-  font-size: 9px;
+  font-size: 14px;
   color: #a3ad96;
   margin: 9px 9px 0;
 }
@@ -2090,12 +2090,12 @@ textarea {
   line-height: 1.2;
 }
 .guide-steps strong {
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 550;
   color: #5f7352;
 }
 .guide-steps p {
-  font-size: 9px;
+  font-size: 14px;
   color: #a3ae94;
   line-height: 1.7;
   margin: 5px 0 0;
@@ -2118,7 +2118,7 @@ textarea {
   margin: 9px 0;
 }
 .prompt-section-title p {
-  font-size: 10px;
+  font-size: 14px;
   color: #9da98f;
   margin: 0;
   line-height: 1.8;
@@ -2127,7 +2127,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 14px;
   color: #8b9e78;
   white-space: nowrap;
 }
@@ -2164,7 +2164,7 @@ textarea {
   padding: 8px 14px;
   border-radius: 4px;
   color: #a2ac94;
-  font-size: 10px;
+  font-size: 14px;
 }
 .model-tabs button.active {
   background: #fffefa;
@@ -2175,7 +2175,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 10px;
+  font-size: 14px;
   border: 1px solid #dce5d2;
   background: #fffefa;
   color: #7f966a;
@@ -2194,7 +2194,7 @@ textarea {
   border: 0;
   background: transparent;
   padding: 20px 23px;
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1.95;
   color: #829273;
   outline-offset: -4px;
@@ -2205,7 +2205,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: 14px;
   color: #a6b097;
   padding: 12px 20px;
   background: #f8faf3;
@@ -2225,13 +2225,13 @@ textarea {
   color: #a6b598;
 }
 .guide-notes h3 {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 500;
   color: #738966;
   margin: 12px 0 9px;
 }
 .guide-notes p {
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.9;
   color: #a4af96;
   margin: 0;
@@ -2241,7 +2241,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 9px;
+  font-size: 14px;
   color: #acb59e;
   border-top: 1px solid #e5e9dc;
   padding: 20px 0;
@@ -2271,13 +2271,13 @@ textarea {
   align-items: center;
 }
 .library-heading h1 > span {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 400;
   letter-spacing: 0;
   color: #9aa78b;
 }
 .library-heading .page-eyebrow {
-  font-size: 7px;
+  font-size: 14px;
   letter-spacing: 1.5px;
 }
 .secondary-button {
@@ -2290,7 +2290,7 @@ textarea {
   justify-content: center;
   gap: 7px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 15px;
   white-space: nowrap;
 }
 .library-empty .empty-compass {
@@ -2321,19 +2321,19 @@ textarea {
   color: #526e42;
 }
 .library-empty p {
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1.9;
   color: #a3ad96;
   margin: 12px 0 10px;
 }
 .library-empty .primary-button {
-  font-size: 11px;
+  font-size: 15px;
   gap: 15px;
 }
 .quiet-button {
   background: none;
   color: #9da98f;
-  font-size: 10px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -2355,7 +2355,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
+  font-size: 15px;
   background: transparent;
   color: #91a280;
   border: 1px solid transparent;
@@ -2368,7 +2368,7 @@ textarea {
   flex-shrink: 0;
 }
 .trip-tabs > button > span {
-  font-size: 8px;
+  font-size: 14px;
   color: #afbaa1;
   padding-left: 4px;
 }
@@ -2396,7 +2396,7 @@ textarea {
 .text-action {
   background: none;
   color: #92a183;
-  font-size: 10px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -2420,7 +2420,7 @@ textarea {
   background: #faf5e8;
   color: #b19a65;
   padding: 10px;
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.8;
 }
 .import-warnings summary {
@@ -2434,11 +2434,11 @@ textarea {
   max-height: 170px;
   overflow: auto;
   margin: 10px 0 0;
-  font-size: 9px;
+  font-size: 14px;
 }
 .missing-coordinate {
   display: block;
-  font-size: 8px;
+  font-size: 14px;
   color: #b09b77;
   margin: 5px 0;
 }
@@ -2458,7 +2458,7 @@ textarea {
   justify-content: center;
   background: #f1f5e9;
   color: #8da578;
-  font-size: 12px;
+  font-size: 16px;
 }
 .no-coordinates {
   position: absolute;
@@ -2481,7 +2481,7 @@ textarea {
   font-weight: 500;
 }
 .no-coordinates p {
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.9;
   margin: 0;
 }
@@ -2489,7 +2489,7 @@ textarea {
   position: absolute;
   left: 29px;
   top: 153px;
-  font-size: 9px;
+  font-size: 14px;
   color: #ac9664;
   background: #faf5e7ed;
   padding: 7px 10px;
@@ -2503,7 +2503,7 @@ textarea {
   margin-top: 22px;
 }
 .app-form > label {
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 500;
   color: #82956f;
   margin-top: 9px;
@@ -2516,11 +2516,11 @@ textarea {
   background: #fffefa;
   color: #5e7750;
   outline-color: #93af7e;
-  font-size: 12px;
+  font-size: 16px;
 }
 .app-form input::placeholder {
   color: #b1bba5;
-  font-size: 10px;
+  font-size: 14px;
 }
 .app-form .primary-button {
   margin-top: 13px;
@@ -2538,7 +2538,7 @@ textarea {
   padding: 9px;
   background: transparent;
   color: #9dab8e;
-  font-size: 11px;
+  font-size: 15px;
   border-radius: 4px;
 }
 .auth-switch button.active {
@@ -2550,13 +2550,13 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 9px;
+  font-size: 14px;
   color: #acb69c;
   line-height: 1.7;
   margin-top: 10px;
 }
 .form-error {
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1.8;
   color: #a77762;
   background: #faf1eb;
@@ -2572,7 +2572,7 @@ textarea {
   overflow: auto;
 }
 .optional-label {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 400;
   color: #b3bda7;
   margin-left: 5px;
@@ -2595,19 +2595,19 @@ textarea {
   color: #9ab286;
 }
 .file-drop > strong {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 500;
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 .file-drop > span {
-  font-size: 9px;
+  font-size: 14px;
   color: #acb99b;
 }
 .file-drop > input {
   margin-top: 4px;
   width: 100%;
-  font-size: 10px;
+  font-size: 14px;
   color: #99aa89;
   padding: 10px 0 15px;
 }
@@ -2617,11 +2617,11 @@ textarea {
   border-radius: 4px;
   padding: 6px 9px;
   background: #fffefa;
-  font-size: 10px;
+  font-size: 14px;
   margin-right: 9px;
 }
 .upload-help {
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.9;
   color: #a9b49a;
   margin-top: 8px;
@@ -2630,7 +2630,7 @@ textarea {
   justify-content: center;
   display: flex;
   margin-top: 17px;
-  font-size: 9px;
+  font-size: 14px;
 }
 .delete-actions {
   display: flex;
@@ -2643,7 +2643,7 @@ textarea {
   color: #fff;
   padding: 11px 17px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2668,7 +2668,7 @@ textarea {
     gap: 11px;
   }
   .guide-intro-actions > span {
-    font-size: 8px;
+    font-size: 14px;
   }
   .guide-steps {
     gap: 20px;
@@ -2677,10 +2677,10 @@ textarea {
     gap: 9px;
   }
   .guide-steps p {
-    font-size: 8px;
+    font-size: 14px;
   }
   .guide-steps strong {
-    font-size: 10px;
+    font-size: 14px;
   }
   .guide-notes {
     gap: 26px;
@@ -2697,7 +2697,7 @@ textarea {
     padding-right: 25px;
   }
   .text-action {
-    font-size: 9px;
+    font-size: 14px;
   }
   .trip-view .trip-heading h1 {
     font-size: 20px;
@@ -2733,17 +2733,17 @@ textarea {
     margin: 15px 0 14px;
   }
   .guide-intro-copy > p {
-    font-size: 11px;
+    font-size: 15px;
   }
   .guide-intro-actions {
     gap: 12px;
     flex-wrap: wrap;
   }
   .guide-intro-actions .primary-button {
-    font-size: 10px;
+    font-size: 14px;
   }
   .guide-intro-actions > span {
-    font-size: 8px;
+    font-size: 14px;
   }
   .guide-postcard {
     max-width: 100%;
@@ -2758,7 +2758,7 @@ textarea {
     font-size: 17px;
   }
   .guide-postcard > p {
-    font-size: 9px;
+    font-size: 14px;
   }
   .guide-steps {
     grid-template-columns: 1fr;
@@ -2773,10 +2773,10 @@ textarea {
     min-width: 30px;
   }
   .guide-steps strong {
-    font-size: 12px;
+    font-size: 16px;
   }
   .guide-steps p {
-    font-size: 10px;
+    font-size: 14px;
   }
   .prompt-section {
     margin-top: 28px;
@@ -2791,17 +2791,17 @@ textarea {
     margin-top: 10px;
   }
   .prompt-section-title p {
-    font-size: 10px;
+    font-size: 14px;
   }
   .sample-download {
-    font-size: 10px;
+    font-size: 14px;
   }
   .prompt-toolbar {
     padding: 10px;
     gap: 6px;
   }
   .model-tabs button {
-    font-size: 9px;
+    font-size: 14px;
     padding: 8px 9px;
     gap: 4px;
   }
@@ -2809,7 +2809,7 @@ textarea {
     width: 12px;
   }
   .copy-button {
-    font-size: 9px;
+    font-size: 14px;
     padding: 8px;
     gap: 4px;
   }
@@ -2818,13 +2818,13 @@ textarea {
   }
   .prompt-text {
     padding: 16px;
-    font-size: 10px;
+    font-size: 14px;
     line-height: 1.9;
     height: 330px;
     min-height: 260px;
   }
   .prompt-footer {
-    font-size: 8px;
+    font-size: 14px;
     padding: 10px 12px;
     align-items: flex-start;
   }
@@ -2847,15 +2847,15 @@ textarea {
     width: 21px;
   }
   .guide-notes h3 {
-    font-size: 12px;
+    font-size: 16px;
     margin: 0 0 7px;
   }
   .guide-notes p {
-    font-size: 10px;
+    font-size: 14px;
   }
   .guide-footer {
     padding: 20px 0;
-    font-size: 8px;
+    font-size: 14px;
   }
   .library-heading {
     padding: 20px 19px;
@@ -2866,11 +2866,11 @@ textarea {
     gap: 10px;
   }
   .library-heading h1 > span {
-    font-size: 9px;
+    font-size: 14px;
   }
   .library-heading .secondary-button {
     padding: 9px 10px;
-    font-size: 10px;
+    font-size: 14px;
   }
   .library-empty {
     min-height: calc(100dvh - 150px);
@@ -2882,17 +2882,17 @@ textarea {
     line-height: 1.6;
   }
   .library-empty p {
-    font-size: 11px;
+    font-size: 15px;
   }
   .library-empty .page-eyebrow {
-    font-size: 7px;
+    font-size: 14px;
   }
   .trip-tabs {
     padding: 10px 17px 0;
     gap: 4px;
   }
   .trip-tabs > button {
-    font-size: 10px;
+    font-size: 14px;
     padding: 10px 12px;
     max-width: 250px;
   }
@@ -2913,7 +2913,7 @@ textarea {
     gap: 5px;
   }
   .trip-heading-right .text-action {
-    font-size: 9px;
+    font-size: 14px;
     gap: 4px;
   }
   .trip-heading-right .text-action > svg {
@@ -2943,7 +2943,7 @@ textarea {
   .coordinate-notice {
     left: 20px;
     top: 131px;
-    font-size: 8px;
+    font-size: 14px;
     max-width: 75%;
     line-height: 1.7;
   }
@@ -2957,10 +2957,10 @@ textarea {
     gap: 8px;
   }
   .no-coordinates strong {
-    font-size: 12px;
+    font-size: 16px;
   }
   .no-coordinates p {
-    font-size: 8px;
+    font-size: 14px;
   }
   .no-coordinates > svg {
     width: 24px;
@@ -2970,16 +2970,16 @@ textarea {
     font-size: 16px;
   }
   .app-form input::placeholder {
-    font-size: 10px;
+    font-size: 14px;
   }
   .modal > p {
-    font-size: 11px;
+    font-size: 15px;
   }
   .session-note {
-    font-size: 8px;
+    font-size: 14px;
   }
   .connection-banner {
-    font-size: 10px;
+    font-size: 14px;
     padding: 9px 15px;
   }
   .connection-banner > svg {
@@ -2997,7 +2997,7 @@ textarea {
     gap: 11px;
   }
   .page-eyebrow {
-    font-size: 8px;
+    font-size: 14px;
   }
   .upload-button {
     flex-shrink: 0;
@@ -3028,4 +3028,123 @@ textarea {
   .trip-view .trip-heading > div:first-child {
     max-width: 100%;
   }
+}
+
+/* Readable type and spacing at normal browser zoom. */
+:root { font-size: 16px; --muted: #5f6b60; }
+body { line-height: 1.65; }
+.app-header { height: 86px; min-height: 86px; }
+.guide-page { padding-top: 40px; padding-left: max(28px, calc((100% - 1200px) / 2)); padding-right: max(28px, calc((100% - 1200px) / 2)); }
+.guide-intro { gap: 44px; }
+.guide-intro-copy > p, .guide-steps p, .guide-notes p,
+.prompt-section-title p, .prompt-footer, .trip-metadata,
+.day-heading > p, .short-memo, .place-address, .place-memo,
+.travel-leg, .upload-help, .google-sharing-help, .session-note { color: #53634f; }
+.guide-intro-copy > p, .guide-steps p, .guide-notes p,
+.prompt-section-title p, .day-heading > p, .place-address,
+.place-memo, .short-memo { font-size: 16px; line-height: 1.8; }
+.guide-steps strong, .guide-notes h3 { font-size: 18px; }
+.guide-steps { gap: 24px; align-items: start; }
+.guide-steps > div { gap: 14px; }
+.guide-intro-actions { flex-wrap: wrap; }
+.guide-intro-actions > span { color: #53634f; }
+.prompt-section-title { gap: 24px; flex-wrap: wrap; align-items: start; }
+.prompt-text { font-size: 15px; line-height: 1.9; min-height: 520px; padding: 24px; tab-size: 2; color: #364634; }
+.guide-page p { word-break: keep-all; overflow-wrap: anywhere; }
+.model-tabs button, .copy-button, .sample-download { color: #46613e; }
+.prompt-footer { line-height: 1.8; padding: 16px 24px; }
+.primary-button, .secondary-button, .account-button, .copy-button, .model-tabs button { min-height: 44px; font-size: 15px; }
+.planner-layout { grid-template-columns: minmax(0, 1fr) 460px; }
+.day-stats { flex-wrap: wrap; white-space: normal; row-gap: 10px; }
+.place-card-body h3 { font-size: 18px; line-height: 1.65; }
+.place-card-top { flex-wrap: wrap; gap: 8px; }
+.category { white-space: normal; }
+.place-details { padding: 14px; }
+.place-details > a { font-size: 15px; min-height: 40px; max-width: 100%; }
+.photo-wrap { width: 72px; height: 66px; min-width: 72px; }
+.date-toolbar { min-width: 0; }
+.date-tabs { min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: thin; }
+.date-tab { flex-shrink: 0; min-width: 140px; }
+.modal { width: min(580px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.app-form input:not([type="file"]) { min-height: 48px; font-size: 16px; }
+.app-form input::placeholder { font-size: 14px; }
+.file-drop { min-width: 0; overflow-wrap: anywhere; }
+.trip-metadata, .trip-actions { flex-wrap: wrap; }
+.trip-card h2, .trip-card-title { overflow-wrap: anywhere; }
+
+.recommendation-guide { margin-top: 44px; padding: 32px 0; border-top: 1px solid var(--border); }
+.guide-section-heading h2 { font-size: 25px; line-height: 1.5; margin: 12px 0; letter-spacing: -0.6px; }
+.guide-section-heading p { max-width: 78ch; color: #53634f; font-size: 16px; line-height: 1.85; }
+.workbook-sheet-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
+.workbook-sheet-cards article { min-width: 0; padding: 24px; background: white; border: 1px solid var(--border); border-radius: 14px; }
+.sheet-number { display: inline-block; color: #416a4c; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.workbook-sheet-cards h3 { font-size: 20px; line-height: 1.5; margin: 0 0 10px; }
+.workbook-sheet-cards p { font-size: 16px; line-height: 1.8; color: #53634f; margin: 0; }
+.workbook-readability-note { padding: 22px 24px; background: #eef2e9; border-left: 4px solid #416a4c; border-radius: 0 12px 12px 0; }
+.workbook-readability-note > strong { font-size: 18px; }
+.workbook-readability-note p { font-size: 16px; line-height: 1.85; color: #465740; margin: 10px 0 0; }
+.scoring-heading { margin-top: 36px; }
+.scoring-rubric { margin: 16px 0; background: white; border: 1px solid #d8dfd0; border-radius: 12px; }
+.scoring-rubric summary { padding: 20px 24px; cursor: pointer; font-size: 19px; font-weight: 650; color: #285748; }
+.scoring-rubric summary span { display: block; margin: 6px 0 0 20px; font-size: 14px; font-weight: 400; color: #53634f; }
+.scoring-rubric > p { margin: 0; padding: 0 24px 18px; font-size: 16px; line-height: 1.8; color: #53634f; }
+.scoring-table-wrap { max-width: 100%; overflow-x: auto; padding: 0 24px 24px; }
+.scoring-table-wrap table { width: 100%; min-width: 620px; border-collapse: collapse; table-layout: fixed; font-size: 15px; line-height: 1.85; }
+.scoring-table-wrap caption { text-align: left; font-weight: 600; padding: 0 0 12px; }
+.scoring-table-wrap th, .scoring-table-wrap td { padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.scoring-table-wrap thead { background: #eef2e9; }
+.scoring-table-wrap th:first-child { width: 150px; }
+.scoring-table-wrap th:nth-child(2) { width: 80px; }
+.scoring-table-wrap tbody tr:nth-child(even) { background: #fafbf7; }
+.evidence-guide { padding: 24px; background: #f0f4eb; border: 1px solid var(--border); border-radius: 12px; margin-top: 24px; }
+.evidence-guide h3 { font-size: 20px; margin: 0 0 16px; }
+.evidence-guide ul { margin: 0; padding-left: 24px; }
+.evidence-guide li, .evidence-guide p { font-size: 16px; line-height: 1.85; color: #465740; }
+.evidence-guide li + li { margin-top: 12px; }
+.evidence-guide > p { margin-bottom: 0; padding-top: 16px; border-top: 1px solid #d8dfd0; }
+
+@media (max-width: 1100px) and (min-width: 761px) {
+  .planner-layout { grid-template-columns: minmax(0, 1fr) 400px; }
+  .guide-intro { gap: 26px; }
+  .workbook-sheet-cards { gap: 12px; }
+  .workbook-sheet-cards article { padding: 18px; }
+}
+@media (max-width: 760px) {
+  .app-shell .app-header { height: auto; min-height: 100px; padding: 12px 18px; flex-wrap: wrap; gap: 10px; }
+  .app-shell .primary-nav { order: 3; flex: 1 0 100%; min-height: 44px; justify-content: center; margin: 0; gap: 30px; }
+  .header-actions { margin-left: auto; gap: 10px; }
+  .upload-button { width: 44px; height: 44px; }
+  .primary-nav button { font-size: 16px; }
+  .guide-page { padding: 28px 20px 0; }
+  .guide-intro { gap: 28px; }
+  .guide-intro-copy > p { font-size: 16px; }
+  .guide-steps { gap: 22px; }
+  .guide-steps strong { font-size: 18px; }
+  .guide-steps p, .guide-notes p { font-size: 16px; }
+  .prompt-section-title h2 { font-size: 23px; line-height: 1.55; }
+  .prompt-section-title p { font-size: 16px; }
+  .prompt-text { font-size: 15px; min-height: 480px; padding: 18px; }
+  .prompt-footer { font-size: 14px; padding: 14px 18px; }
+  .planner-layout { display: flex; }
+  .date-tab { flex: 0 0 auto; min-width: 128px; }
+  .date-tabs { max-width: 100%; }
+  .day-heading > p, .place-address, .place-memo, .short-memo { font-size: 16px; }
+  .place-card-body h3 { font-size: 18px; }
+  .map-disclaimer { max-width: 48%; line-height: 1.6; }
+  .guide-section-heading h2 { font-size: 23px; }
+  .workbook-sheet-cards { grid-template-columns: 1fr; }
+  .workbook-sheet-cards article { padding: 22px; }
+  .workbook-readability-note, .evidence-guide { padding: 20px; }
+  .scoring-rubric summary { padding: 18px; }
+  .scoring-rubric > p { padding-left: 18px; padding-right: 18px; }
+  .scoring-table-wrap { padding-left: 18px; padding-right: 18px; }
+  .scoring-table-wrap table { min-width: 0; table-layout: auto; }
+  .scoring-table-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .scoring-table-wrap tbody, .scoring-table-wrap tr, .scoring-table-wrap th, .scoring-table-wrap td { display: block; width: auto; }
+  .scoring-table-wrap tbody tr { padding: 16px 0; border-top: 1px solid var(--border); }
+  .scoring-table-wrap th:first-child, .scoring-table-wrap th:nth-child(2) { width: auto; }
+  .scoring-table-wrap tbody th, .scoring-table-wrap tbody td { padding: 4px 12px; border: 0; }
+  .scoring-table-wrap tbody th { font-size: 17px; }
+  .scoring-table-wrap tbody td:nth-child(2) { color: #285748; font-weight: 650; }
+  .scoring-table-wrap tbody td:nth-child(2)::before { content: '배점 '; }
 }
