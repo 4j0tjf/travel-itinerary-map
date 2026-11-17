@@ -11,6 +11,7 @@ import { HttpError } from "./utils/errors.js";
 export function createApp({
   dataDir = path.join(root, "data"),
   authLimit = 30,
+  basePath = "",
 } = {}) {
   const app = express();
   const store = createStore(dataDir);
@@ -165,5 +166,13 @@ export function createApp({
         ...(error.details ? { details: error.details } : {}),
       });
   });
-  return app;
+  const prefix = basePath.replace(/\/+$/, "");
+  if (!prefix) return app;
+  // Keep direct local checks available while serving the complete app below a public prefix.
+  const mounted = express();
+  mounted.disable("x-powered-by");
+  mounted.set("trust proxy", "loopback");
+  mounted.use(prefix, app);
+  mounted.use(app);
+  return mounted;
 }

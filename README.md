@@ -1,5 +1,9 @@
 # 여정 · 여행 일정 지도
 
+### 이 PC의 공개 경로
+
+`https://19991115.xyz/travel` → Cloudflare Tunnel → `http://127.0.0.1:7000`으로 연결합니다. `.env`는 기존 키와 데이터를 유지하며 `PORT=7000`, `BASE_PATH=/travel`을 사용합니다. `BASE_PATH`는 화면 파일·API·다운로드와 로그인 쿠키 경로에 반영되므로 변경 후 `npm run build`와 `TravelItineraryMap` 서비스 재시작이 필요합니다. 로컬 상태 확인용 `http://localhost:7000/api/health`도 계속 사용할 수 있습니다.
+
 React·TypeScript·Vite와 Node.js·Express로 실행하는 여행 플래너입니다. **가이드 | 전체 일정** 메뉴에서 일정을 만들고, 계정별로 서버 PC에 저장합니다. 기본 포트는 **6001**, 운영 도메인 기준은 **19991115.xyz**입니다.
 
 ## 이번 버전의 동작

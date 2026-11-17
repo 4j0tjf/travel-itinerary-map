@@ -118,6 +118,33 @@ const rows = [
   ],
 ];
 
+test("a public subpath supports sessions, spreadsheet import and downloads", async () =>
+  fixture(async ({ start }) => {
+    const origin = await start();
+    const base = origin + "/travel";
+    assert.equal((await fetch(origin + "/api/health")).status, 200);
+    assert.equal((await fetch(base + "/api/health")).status, 200);
+    assert.equal((await fetch(base + "/api/trips")).status, 401);
+    const auth = await register(base);
+    assert.match(auth.header, /Path=\/travel(?:;|$)/);
+    const identity = await fetch(base + "/api/auth/me", { headers: { Cookie: auth.cookie } });
+    assert.equal((await identity.json()).user.id, auth.user.id);
+    const imported = await upload(base, auth.cookie, await workbook(rows));
+    assert.equal(imported.status, 201, await imported.clone().text());
+    const trips = await fetch(base + "/api/trips", { headers: { Cookie: auth.cookie } });
+    assert.equal((await trips.json()).trips.length, 1);
+    const sample = await fetch(base + "/api/sample");
+    assert.equal(sample.status, 200);
+    assert.match(sample.headers.get("content-disposition"), /itinerary\.xlsx/);
+    const loggedOut = await fetch(base + "/api/auth/logout", {
+      method: "POST", headers: { ...clientHeader, Cookie: auth.cookie },
+    });
+    assert.equal(loggedOut.status, 204);
+    assert.match(loggedOut.headers.get("set-cookie"), /Path=\/travel(?:;|$)/);
+    assert.equal((await fetch(base + "/api/trips", { headers: { Cookie: auth.cookie } })).status, 401);
+  }, { basePath: "/travel" }),
+);
+
 test("new accounts have zero trips, public endpoints expose no private itinerary", async () =>
   fixture(async ({ start }) => {
     const base = await start();

@@ -16,7 +16,7 @@ const cookieOptions = (req) => ({
   httpOnly: true,
   sameSite: "lax",
   secure: req.secure,
-  path: "/",
+  path: req.baseUrl || "/",
 });
 function tokenFrom(req) {
   return (

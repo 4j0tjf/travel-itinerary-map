@@ -436,7 +436,7 @@ export default function App() {
               </div>
               <a
                 className="sample-download"
-                href="/api/sample"
+                href={`${import.meta.env.BASE_URL}api/sample`}
                 download="itinerary.xlsx"
               >
                 <ArrowDownToLine size={15} />
@@ -801,7 +801,7 @@ export default function App() {
               </form>
               <a
                 className="sample-download modal-sample"
-                href="/api/sample"
+                href={`${import.meta.env.BASE_URL}api/sample`}
                 download="itinerary.xlsx"
               >
                 <ArrowDownToLine size={13} />

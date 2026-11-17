@@ -9,7 +9,7 @@ export class ApiError extends Error {
   }
 }
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch("/api" + url, {
+  const response = await fetch(import.meta.env.BASE_URL + "api" + url, {
     ...options,
     credentials: "same-origin",
     headers: {
