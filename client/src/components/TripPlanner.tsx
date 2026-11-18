@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -25,6 +25,7 @@ import Dialog from "./Dialog";
 import { useRoadRoutes } from "../services/road-routes";
 import { useMobileLayout } from "../services/use-mobile-layout";
 import { useAdaptiveTabs } from "../services/use-adaptive-tabs";
+import { rememberDaySelection, restoreDaySelection } from "../services/day-selection";
 const weekday = (date: string) =>
   new Date(date + "T12:00:00").toLocaleDateString("ko-KR", { weekday: "long" });
 const shortDate = (date: string) =>
@@ -44,9 +45,7 @@ export default function TripPlanner({
   onEdit: () => void;
 }) {
   const [dayIndex, setDayIndex] = useState(0);
-  const [selectedId, setSelectedId] = useState(
-    trip.days[0]?.places[0]?.id || "",
-  );
+  const [selectedId, setSelectedId] = useState(() => restoreDaySelection(trip.id, trip.days[0]));
   const [focusVersion, setFocusVersion] = useState(0);
   const [mobileView, setMobileView] = useState<"map" | "list">("map");
   const mobile = useMobileLayout();
@@ -63,11 +62,26 @@ export default function TripPlanner({
     setFocusVersion((version) => version + 1);
     if (!mobile) cards.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [mobile]);
+  useEffect(() => {
+    if (day) rememberDaySelection(trip.id, day, selectedId);
+  }, [trip.id, day, selectedId]);
   const changeDay = (index: number) => {
+    // 이 세션에서 그 날짜에 보던 장소가 있으면 그 장소부터, 처음이면 첫 장소부터 보여준다.
+    const nextDay = trip.days[index];
+    const nextId = restoreDaySelection(trip.id, nextDay);
+    const resumed = Boolean(nextId) && nextId !== nextDay.places[0]?.id;
     setDayIndex(index);
-    setSelectedId(trip.days[index].places[0]?.id || "");
+    setSelectedId(nextId);
     document.getElementById(`day-tab-${index}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    if (mobile) requestAnimationFrame(() => planner.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    requestAnimationFrame(() => {
+      if (mobile && !(mobileView === "list" && resumed)) {
+        planner.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else if (resumed) {
+        cards.current[nextId]?.scrollIntoView({ behavior: "smooth", block: mobile ? "start" : "nearest" });
+      } else {
+        document.getElementById("day-panel")?.scrollTo?.({ top: 0, behavior: "smooth" });
+      }
+    });
   };
   const switchView = (view: "map" | "list") => {
     setMobileView(view);
