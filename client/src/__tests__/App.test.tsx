@@ -135,6 +135,11 @@ describe("guide and private travel collection", () => {
     expect(copied).toContain("연속 90분 이상");
     expect(copied).toContain("메모 맨 앞에 반드시 '[AI 추천]'");
     expect(copied).not.toContain("종료시간을 모르면 비워");
+    expect(copied).toContain("지도 좌표 필수");
+    expect(copied).toContain("좌표 누락 0건");
+    expect(copied).toContain("전체 방문 행 수와 유효한 숫자 좌표 쌍의 수가 같은지");
+    expect(copied).not.toContain("불확실하면 둘 다 비우세요");
+    expect(copied).not.toContain("검증한 숫자 쌍 또는 둘 다 빈칸");
     expect(copied).toContain("세부 점수·점수 근거·채점 기준·가정·출처 모음용 탭을 생성하지 마세요");
     fireEvent.click(screen.getByRole("tab", { name: "Claude" }));
     fireEvent.click(screen.getByRole("button", { name: "프롬프트 복사" }));
@@ -169,6 +174,10 @@ describe("guide and private travel collection", () => {
     expect(followup).toContain("앞 장소 종료 + 뒤 여유");
     expect(followup).toContain("D열 장소명은 모든 방문 행");
     expect(followup).toContain("큰 빈 시간에 AI 추천 일정 추가");
+    expect(followup).toContain("지도 좌표 필수");
+    expect(followup).toContain("F:G가 기본 숨김이어도 선택 입력 항목이 아닙니다");
+    expect(followup).toContain("기존 파일의 검증된 좌표");
+    expect(followup).toContain("좌표 누락 0건");
     expect(followup).toContain("변경 부분만 담은 파일이 아니라");
     expect(followup).toContain("날짜 | 시간 | 종료시간 | 장소명 | 주소 | 위도 | 경도 | 메모 | 이동수단 | 이미지URL | 여행지역 | 여행명");
     expect(screen.queryByRole("dialog")).toBeNull();
