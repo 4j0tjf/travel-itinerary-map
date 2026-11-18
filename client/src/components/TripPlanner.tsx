@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
-  ChevronDown,
+  List,
+  Map as MapIcon,
   ChevronRight,
   ExternalLink,
   Info,
@@ -22,6 +23,7 @@ import { hasCoordinates, mapsUrl } from "../types";
 import TravelMap from "./TravelMap";
 import Dialog from "./Dialog";
 import { useRoadRoutes } from "../services/road-routes";
+import { useMobileLayout } from "../services/use-mobile-layout";
 const weekday = (date: string) =>
   new Date(date + "T12:00:00").toLocaleDateString("ko-KR", { weekday: "long" });
 const shortDate = (date: string) =>
@@ -45,23 +47,44 @@ export default function TripPlanner({
     trip.days[0]?.places[0]?.id || "",
   );
   const [focusVersion, setFocusVersion] = useState(0);
-  const [collapsed, setCollapsed] = useState(false);
+  const [mobileView, setMobileView] = useState<"map" | "list">("map");
+  const mobile = useMobileLayout();
   const [routeVisible, setRouteVisible] = useState(true);
   const [modal, setModal] = useState<"settings" | "overview" | null>(null);
   const cards = useRef<Record<string, HTMLDivElement | null>>({});
+  const planner = useRef<HTMLElement>(null);
   const day = trip.days[dayIndex];
   const routes = useRoadRoutes(trip);
   const dayRoutes = useMemo(() => routes.paths.filter(path => path.date === day?.date), [routes.paths, day?.date]);
   const selectPlace = useCallback((id: string) => {
     setSelectedId(id);
     setFocusVersion((version) => version + 1);
-    setCollapsed(false);
-    cards.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, []);
+    if (!mobile) cards.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [mobile]);
   const changeDay = (index: number) => {
     setDayIndex(index);
     setSelectedId(trip.days[index].places[0]?.id || "");
-    setCollapsed(false);
+    document.getElementById(`day-tab-${index}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    if (mobile) requestAnimationFrame(() => planner.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const switchView = (view: "map" | "list") => {
+    setMobileView(view);
+    requestAnimationFrame(() => planner.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const showSelectedInList = () => {
+    setMobileView("list");
+    requestAnimationFrame(() => {
+      cards.current[selectedId]?.querySelector<HTMLButtonElement>(".place-card")?.focus({ preventScroll: true });
+      cards.current[selectedId]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  const showSelectedOnMap = () => {
+    setMobileView("map");
+    setFocusVersion(version => version + 1);
+    requestAnimationFrame(() => {
+      planner.current?.querySelector<HTMLButtonElement>('.mobile-view-switch button[aria-pressed="true"]')?.focus({ preventScroll: true });
+      planner.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
   if (!day)
     return (
@@ -119,8 +142,12 @@ export default function TripPlanner({
           </button>
         </div>
       </section>
-      <main className={`planner-layout ${collapsed ? "panel-collapsed" : ""}`}>
-        <section className="map-section" aria-label="여행 지도">
+      <main ref={planner} className={`planner-layout mobile-view-${mobileView}`}>
+        <div className="planner-toolbar">
+          <div className="mobile-view-switch" role="group" aria-label="여행 화면 전환">
+            <button aria-pressed={mobileView === "map"} onClick={() => switchView("map")}><MapIcon size={18} />지도</button>
+            <button aria-pressed={mobileView === "list"} onClick={() => switchView("list")}><List size={18} />일정 <span>{day.places.length}</span></button>
+          </div>
           <div className="date-toolbar">
             <div className="date-tabs" role="tablist" aria-label="여행 날짜">
               {trip.days.map((d, i) => (
@@ -152,6 +179,8 @@ export default function TripPlanner({
               <CalendarDays size={18} />
             </button>
           </div>
+        </div>
+        <section className="map-section" aria-label="여행 지도">
           <TravelMap
             day={day}
             region={trip.region || trip.title}
@@ -161,6 +190,8 @@ export default function TripPlanner({
             onSettings={() => setModal("settings")}
             routeVisible={routeVisible}
             roadPaths={dayRoutes}
+            compact={mobile}
+            onShowList={showSelectedInList}
           />
           <div className="road-route-status" role="status">
             <span>{routes.loading ? "전체 날짜의 길찾기 경로를 준비하고 있어요…" : routes.error ||
@@ -190,15 +221,6 @@ export default function TripPlanner({
           role="tabpanel"
           aria-labelledby={`day-tab-${dayIndex}`}
         >
-          <button
-            className="mobile-panel-toggle"
-            onClick={() => setCollapsed((v) => !v)}
-            aria-expanded={!collapsed}
-          >
-            <span className="drag-handle" />
-            <span>오늘의 일정 · {day.places.length}곳</span>
-            <ChevronDown size={17} className={collapsed ? "rotated" : ""} />
-          </button>
           <div className="panel-contents">
             <div className="panel-hero">
               <div className="hero-art" aria-hidden="true">
@@ -347,6 +369,7 @@ export default function TripPlanner({
                           Google Maps에서 보기
                           <ExternalLink size={12} />
                         </a>
+                        <button className="mobile-show-map" onClick={showSelectedOnMap}><MapIcon size={17} />지도에서 위치 보기</button>
                       </div>
                     )}
                     {i < day.places.length - 1 && (

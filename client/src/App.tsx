@@ -296,7 +296,7 @@ export default function App() {
             ? "일정 이름 변경"
             : "여행 일정을 삭제할까요?";
   return (
-    <div className={`app-shell ${page === "guide" ? "guide-shell" : ""}`}>
+    <div className={`app-shell ${page === "guide" ? "guide-shell" : ""} ${page === "trips" && selectedTrip && user && !tripsLoading ? "has-trip" : ""}`}>
       <header className="app-header">
         <a href="#guide" className="brand" aria-label="여정 가이드 홈">
           <span className="brand-symbol">

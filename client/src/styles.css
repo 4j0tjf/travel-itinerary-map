@@ -331,12 +331,23 @@ h1 {
   width: 29px;
 }
 .planner-layout {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 392px;
   min-height: 0;
   flex: 1;
   border-top: 1px solid var(--border);
 }
+.planner-toolbar {
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  right: calc(460px + 26px);
+  z-index: 3;
+  pointer-events: none;
+}
+.planner-toolbar .date-toolbar { position: static; }
+.mobile-view-switch, .mobile-show-map, .map-place-preview > .preview-open-list { display: none; }
 .map-section {
   position: relative;
   display: flex;
@@ -3140,10 +3151,129 @@ body { line-height: 1.65; }
 .evidence-guide > p { margin-bottom: 0; padding-top: 16px; border-top: 1px solid #d8dfd0; }
 
 @media (max-width: 1100px) and (min-width: 761px) {
+  .planner-toolbar { right: calc(400px + 17px); left: 17px; }
   .planner-layout { grid-template-columns: minmax(0, 1fr) 400px; }
   .guide-intro { gap: 26px; }
   .workbook-sheet-cards { gap: 12px; }
   .workbook-sheet-cards article { padding: 18px; }
+}
+
+/* Mobile trip workspace: separate map and readable schedule, with shared dates. */
+@media (max-width: 760px), (max-width: 960px) and (max-height: 500px) and (pointer: coarse) {
+  .app-shell.has-trip { height: auto; min-height: 100dvh; overflow: visible; }
+  .has-trip .trip-view { min-height: 0; flex: none; }
+  .app-shell.has-trip .app-header {
+    height: 64px; min-height: 64px; padding: 8px 12px; gap: 8px; flex-wrap: nowrap;
+  }
+  .has-trip .brand { gap: 7px; flex-shrink: 0; }
+  .has-trip .brand > span:last-child { font-size: 20px; letter-spacing: 0; }
+  .has-trip .brand-sub { display: none; }
+  .app-shell.has-trip .primary-nav {
+    order: 0; flex: 1 1 auto; min-width: 0; min-height: 44px; margin: 0; gap: 10px; justify-content: center;
+  }
+  .has-trip .primary-nav button { font-size: 14px; min-height: 44px; white-space: nowrap; }
+  .has-trip .primary-nav button > svg { display: none; }
+  .has-trip .header-actions { gap: 4px; margin: 0; }
+  .has-trip .header-actions .personal-label { display: none; }
+  .has-trip .header-actions button { width: 44px; height: 44px; min-height: 44px; padding: 0; justify-content: center; }
+  .has-trip .header-actions button > span { display: none; }
+  .has-trip .library-heading { display: none; }
+  .has-trip .trip-tabs { padding: 6px 12px 0; min-height: 46px; }
+  .has-trip .trip-tabs > button { min-height: 44px; max-width: 270px; padding: 8px 12px; }
+  .trip-view .trip-heading {
+    display: block; padding: 12px; min-height: 0;
+  }
+  .trip-view .trip-heading .breadcrumbs { display: none; }
+  .trip-view .trip-heading > div:first-child { max-width: 100%; }
+  .trip-view .trip-title-row h1 {
+    font-size: 21px; white-space: normal; line-height: 1.5; overflow-wrap: anywhere;
+  }
+  .trip-view .trip-metadata { margin-top: 5px; gap: 5px 10px; font-size: 14px; flex-wrap: wrap; }
+  .trip-view .trip-metadata .meta-dot { display: none; }
+  .trip-view .trip-heading-right {
+    position: static; display: flex; gap: 4px; padding: 6px 0 0; justify-content: flex-start;
+  }
+  .trip-heading-right .text-action { min-height: 44px; padding: 8px; font-size: 14px; gap: 5px; }
+  .trip-heading-right .text-action > svg { width: 16px; height: 16px; }
+  .trip-heading-right .text-action > span { display: inline; }
+  .trip-heading-right .heading-settings { margin-left: auto; width: 44px; height: 44px; }
+  .planner-layout { display: flex; flex: none; flex-direction: column; }
+  .planner-toolbar {
+    position: sticky; top: 0; left: auto; right: auto; z-index: 6; width: 100%;
+    background: #fafbf7; padding: 10px 12px; pointer-events: auto; border-bottom: 1px solid #dce5d9;
+  }
+  .mobile-view-switch { display: flex; gap: 4px; padding: 4px; background: #e9eee5; border-radius: 12px; }
+  .mobile-view-switch button {
+    display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px;
+    min-height: 44px; border-radius: 8px; background: transparent; color: #53634f; font-size: 16px; font-weight: 600;
+  }
+  .mobile-view-switch button[aria-pressed="true"] { background: #285748; color: white; box-shadow: 0 2px 5px #2857481c; }
+  .mobile-view-switch button > span { font-size: 14px; opacity: .85; }
+  .planner-toolbar .date-toolbar { margin-top: 8px; gap: 8px; min-width: 0; }
+  .planner-toolbar .date-tabs {
+    flex: 1; width: auto; min-width: 0; max-width: calc(100% - 52px);
+    padding: 0 0 2px; gap: 5px; background: transparent; border: 0; box-shadow: none; scrollbar-width: thin;
+  }
+  .planner-toolbar .date-tab { min-width: 104px; min-height: 62px; padding: 7px 10px; gap: 2px; background: #eef2e9; }
+  .planner-toolbar .date-tab.selected { background: #285748; }
+  .planner-toolbar .date-tab > span:nth-child(2) { font-size: 15px; gap: 4px; }
+  .planner-toolbar .day-tab-label { font-size: 14px; letter-spacing: .6px; }
+  .planner-toolbar .date-calendar { display: grid; width: 44px; height: 44px; flex-shrink: 0; border-color: #dce5d9; box-shadow: none; }
+  .map-section { height: auto; min-height: 0; overflow: visible; }
+  .travel-map { flex: none; height: clamp(360px, 60svh, 640px); min-height: 360px; }
+  .travel-map .map-location { display: none; }
+  .map-tools { top: 12px; right: 12px; bottom: auto; gap: 8px; }
+  .map-tools .icon-button, .zoom-group .icon-button { width: 44px; height: 44px; }
+  .map-bottom { top: 12px; bottom: auto; left: 12px; right: 76px; justify-content: flex-start; }
+  .map-bottom .map-mode { min-height: 44px; padding: 8px 10px; }
+  .map-bottom .map-disclaimer { display: none; }
+  .map-place-preview {
+    left: 12px; right: 12px; bottom: 32px; max-width: none; padding: 10px; gap: 8px;
+    border-radius: 12px; box-shadow: 0 4px 20px #283f3326;
+  }
+  .map-place-preview .preview-icon { display: none; }
+  .map-place-preview > div:nth-child(2) { flex: 1; }
+  .map-place-preview strong { font-size: 16px; }
+  .map-place-preview > .preview-open-list {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    min-height: 44px; padding: 8px 10px; margin: 0; border-radius: 8px; font-size: 14px; background: #285748; color: white;
+  }
+  .map-place-preview > a { display: grid; width: 44px; height: 44px; padding: 0; margin: 0; flex-shrink: 0; }
+  .coordinate-notice { top: 66px; left: 12px; max-width: calc(100% - 88px); }
+  .road-route-status { padding: 14px 16px; overflow-wrap: anywhere; }
+  .road-route-status p { margin: 6px 0; }
+  .journey-note { display: none; }
+  .itinerary-panel { border: 0; border-radius: 0; margin: 0; overflow: visible; }
+  .mobile-view-map > .itinerary-panel { display: none; }
+  .mobile-view-list > .map-section { display: none; }
+  .panel-contents { min-height: 0; }
+  .itinerary-panel .panel-hero { display: none; }
+  .itinerary-panel .day-heading { padding: 20px 16px 16px; }
+  .itinerary-panel .day-heading h2 { font-size: 22px; line-height: 1.5; margin-top: 10px; }
+  .itinerary-panel .day-heading > p { font-size: 16px; }
+  .day-stats { gap: 8px 16px; align-items: center; }
+  .day-stats > button { min-height: 44px; padding: 8px 10px; border: 1px solid #dce5d9; border-radius: 8px; }
+  .schedule-list { padding: 20px 16px 16px; }
+  .schedule-item { scroll-margin-top: 154px; }
+  .place-card { min-height: 64px; }
+  .place-card-body h3 { font-size: 19px; line-height: 1.6; }
+  .place-details { padding: 14px; }
+  .place-details > a { min-height: 44px; }
+  .mobile-show-map {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: 44px; padding: 10px; margin-top: 10px; border-radius: 8px; background: #e8f0e4; color: #285748; font-size: 16px;
+  }
+  .no-coordinates { inset: 24% 16% 30%; }
+  .panel-footer { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .modal-backdrop { padding: 12px 8px max(12px, env(safe-area-inset-bottom)); }
+  .modal { width: 100%; max-height: calc(100dvh - 24px - env(safe-area-inset-bottom)); padding: 24px 20px; border-radius: 18px; }
+  .modal-close { width: 44px; height: 44px; }
+  .app-form input:not([type="file"]), .app-form textarea { font-size: 16px; min-height: 48px; }
+  .source-file-input { font-size: 16px; }
+}
+@media (max-width: 360px) {
+  .has-trip .brand > span:last-child { display: none; }
+  .has-trip .primary-nav { gap: 12px; }
 }
 @media (max-width: 760px) {
   .app-shell .app-header { height: auto; min-height: 100px; padding: 12px 18px; flex-wrap: wrap; gap: 10px; }

@@ -23,6 +23,8 @@ export default function TravelMap({
   onSettings,
   routeVisible,
   roadPaths = [],
+  compact = false,
+  onShowList,
 }: {
   day: Day;
   region: string;
@@ -32,6 +34,8 @@ export default function TravelMap({
   onSettings: () => void;
   routeVisible: boolean;
   roadPaths?: RoadPath[];
+  compact?: boolean;
+  onShowList?: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
@@ -218,6 +222,10 @@ export default function TravelMap({
     if (previous?.day === day.date && previous.focus !== focusVersion) {
       map.current.panTo(selected);
     }
+    if (compact) {
+      info.current?.close();
+      return;
+    }
     const content = document.createElement("div");
     content.className = "google-info";
     const heading = document.createElement("strong");
@@ -230,7 +238,7 @@ export default function TravelMap({
       map: map.current,
       anchor: markers.current[selected.id],
     });
-  }, [selected, ready, day, focusVersion]);
+  }, [selected, ready, day, focusVersion, compact]);
   useEffect(() => {
     if (map.current) map.current.setMapTypeId(terrain ? "terrain" : "roadmap");
   }, [terrain]);
@@ -474,6 +482,7 @@ export default function TravelMap({
             </span>
             <strong>{selected.name}</strong>
           </div>
+          {onShowList && <button className="preview-open-list" onClick={onShowList}>일정 보기</button>}
           <a
             aria-label="선택한 장소를 Google Maps에서 열기"
             href={mapsUrl(selected)}
