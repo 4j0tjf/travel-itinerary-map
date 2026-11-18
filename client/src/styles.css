@@ -2383,6 +2383,10 @@ textarea {
   color: #afbaa1;
   padding-left: 4px;
 }
+.trip-tabs > button > .trip-tab-title {
+  flex: 1; min-width: 0; padding: 0; font-size: inherit; color: inherit;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .trip-tabs > button.selected {
   background: #fafbf7;
   border-color: #dce5d1;
@@ -3318,4 +3322,84 @@ body { line-height: 1.65; }
   .scoring-table-wrap tbody th { font-size: 17px; }
   .scoring-table-wrap tbody td:nth-child(2) { color: #285748; font-weight: 650; }
   .scoring-table-wrap tbody td:nth-child(2)::before { content: '배점 '; }
+}
+
+/* Keep the desktop workspace tall; tabs grow to two rows before narrowing. */
+@media (min-width: 761px) and (pointer: fine), (min-width: 961px) {
+  .app-header { height: 56px; min-height: 56px; padding: 0 20px; gap: 18px; }
+  .brand-symbol { width: 32px; height: 32px; border-radius: 9px; }
+  .brand > span:last-child { font-size: 21px; letter-spacing: 1px; }
+  .brand-sub { display: none; }
+  .header-divider { height: 24px; }
+  .primary-nav { margin-left: 16px; gap: 24px; }
+  .primary-nav button { font-size: 16px; }
+  .header-actions { gap: 14px; }
+  .upload-button { padding: 7px 12px; }
+  .library-heading { min-height: 50px; padding: 6px 20px; }
+  .library-heading > div { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .library-heading .page-eyebrow { display: none; }
+  .library-heading h1 { margin: 0; font-size: 18px; gap: 10px; }
+  .library-heading .secondary-button { min-height: 34px; padding: 5px 10px; }
+  .trip-tabs {
+    display: grid; grid-template-columns: repeat(var(--tab-columns, 1), var(--tab-width, 180px));
+    grid-template-rows: repeat(var(--tab-rows, 1), 34px);
+    gap: 4px; padding: 6px 20px; max-width: 100%; overflow-x: auto; overflow-y: hidden;
+  }
+  .trip-tabs > button {
+    min-width: 0; max-width: none; min-height: 0; height: 34px; padding: 4px 8px;
+    gap: 5px; font-size: 14px; border: 1px solid #dce5d1; border-radius: 6px;
+  }
+  .trip-tabs > button > svg { width: 13px; flex-shrink: 0; }
+  .trip-tabs > button > span:last-child { flex-shrink: 0; font-size: 14px; padding-left: 0; }
+  .trip-tabs > button.selected { border-color: #285748; box-shadow: none; background: #e7efe2; color: #285748; }
+  .trip-view .trip-heading { min-height: 72px; padding: 8px 20px; gap: 16px; }
+  .trip-view .trip-heading .breadcrumbs { display: none; }
+  .trip-view .trip-heading > div:first-child { max-width: calc(100% - 325px); }
+  .trip-view .trip-heading h1 { font-size: 21px; line-height: 1.4; }
+  .trip-view .trip-metadata { margin-top: 3px; font-size: 14px; gap: 8px; }
+  .trip-view .trip-heading-right { align-self: center; padding: 0; gap: 6px; flex-shrink: 0; }
+  .trip-heading-right .text-action { min-height: 34px; padding: 6px; }
+  .planner-layout {
+    --itinerary-width: clamp(390px, 36vw, 580px);
+    grid-template-columns: minmax(0, 1fr) var(--itinerary-width);
+  }
+  .planner-toolbar { top: 12px; left: 16px; right: calc(var(--itinerary-width) + 16px); }
+  .planner-toolbar .date-toolbar { gap: 8px; }
+  .planner-toolbar .date-tabs {
+    display: grid; grid-template-columns: repeat(var(--tab-columns, 1), var(--tab-width, 116px));
+    grid-template-rows: repeat(var(--tab-rows, 1), 52px);
+    flex: 1; width: auto; min-width: 0; max-width: calc(100% - 44px);
+    padding: 0; gap: 4px; border: 0; background: transparent; overflow-x: auto; overflow-y: hidden;
+  }
+  .planner-toolbar .date-tab {
+    min-width: 0; min-height: 0; padding: 5px 8px; gap: 1px; background: #fffefa;
+  }
+  .planner-toolbar .date-tab.selected { background: #285748; }
+  .planner-toolbar .day-tab-label { font-size: 14px; letter-spacing: .6px; line-height: 1.3; }
+  .planner-toolbar .date-tab > span:nth-child(2) { font-size: 15px; gap: 3px; line-height: 1.5; white-space: nowrap; overflow: hidden; }
+  .planner-toolbar .date-tab small { font-size: 14px; flex-shrink: 0; }
+  .planner-toolbar .date-calendar { display: grid; flex-shrink: 0; width: 36px; height: 36px; }
+  .travel-map .map-location { top: 76px; left: 18px; }
+  .planner-layout:has(.date-tabs[data-rows="2"]) .map-location { top: 130px; }
+  .coordinate-notice { top: 102px; }
+  .planner-layout:has(.date-tabs[data-rows="2"]) .coordinate-notice { top: 156px; }
+  .journey-note { display: none; }
+  .road-route-status { padding: 8px 16px; gap: 3px; line-height: 1.5; }
+  .road-route-status p { margin: 4px 0; }
+  .itinerary-panel .panel-hero { display: none; }
+  .itinerary-panel .day-heading { padding: 12px 18px 10px; }
+  .day-heading h2 { font-size: 21px; margin: 5px 0 3px; line-height: 1.4; }
+  .day-heading > p { font-size: 16px; line-height: 1.5; }
+  .day-stats { margin-top: 8px; gap: 8px 14px; }
+  .day-stats > button { min-height: 30px; }
+  .schedule-list { padding: 12px 18px 8px; }
+  .schedule-label { margin-bottom: 10px; }
+  .schedule-item { gap: 10px; }
+  .place-card-top { margin-bottom: 5px; }
+  .place-card-body h3 { margin-bottom: 2px; font-size: 18px; }
+  .short-memo { margin-top: 4px; }
+  .place-details { margin-top: 8px; padding: 10px 12px; }
+  .place-address, .place-memo { margin-top: 0; margin-bottom: 6px; }
+  .travel-leg { margin-top: 10px; margin-bottom: 12px; }
+  .panel-footer { padding: 12px 18px; }
 }

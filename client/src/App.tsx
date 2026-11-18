@@ -41,6 +41,7 @@ import TripPlanner from "./components/TripPlanner";
 import RecommendationGuide from "./components/RecommendationGuide";
 import FollowupPrompt from "./components/FollowupPrompt";
 import TripSourceEditor from "./components/TripSourceEditor";
+import { useAdaptiveTabs } from "./services/use-adaptive-tabs";
 
 type Modal = "login" | "register" | "upload" | "rename" | "delete" | null;
 const errorMessage = (error: unknown) =>
@@ -53,6 +54,7 @@ export default function App() {
   const [sessionError, setSessionError] = useState("");
   const [sessionRetry, setSessionRetry] = useState(0);
   const [trips, setTrips] = useState<Itinerary[]>([]);
+  const tripTabs = useAdaptiveTabs(trips.length, 180);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [tripsLoading, setTripsLoading] = useState(false);
   const [tripsError, setTripsError] = useState("");
@@ -637,6 +639,9 @@ export default function App() {
             <>
               <div
                 className="trip-tabs"
+                ref={tripTabs.ref}
+                style={tripTabs.style}
+                data-rows={tripTabs.rows}
                 role="tablist"
                 aria-label="등록된 여행"
               >
@@ -647,11 +652,12 @@ export default function App() {
                     role="tab"
                     aria-selected={selectedTrip?.id === trip.id}
                     aria-controls="trip-view"
+                    title={trip.title}
                     className={selectedTrip?.id === trip.id ? "selected" : ""}
                     onClick={() => navigate("trips/" + trip.id)}
                   >
                     <MapPin size={14} />
-                    {trip.title}
+                    <span className="trip-tab-title">{trip.title}</span>
                     <span>{trip.days.length}일</span>
                   </button>
                 ))}

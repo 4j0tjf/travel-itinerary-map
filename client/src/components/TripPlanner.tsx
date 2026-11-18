@@ -24,6 +24,7 @@ import TravelMap from "./TravelMap";
 import Dialog from "./Dialog";
 import { useRoadRoutes } from "../services/road-routes";
 import { useMobileLayout } from "../services/use-mobile-layout";
+import { useAdaptiveTabs } from "../services/use-adaptive-tabs";
 const weekday = (date: string) =>
   new Date(date + "T12:00:00").toLocaleDateString("ko-KR", { weekday: "long" });
 const shortDate = (date: string) =>
@@ -49,6 +50,7 @@ export default function TripPlanner({
   const [focusVersion, setFocusVersion] = useState(0);
   const [mobileView, setMobileView] = useState<"map" | "list">("map");
   const mobile = useMobileLayout();
+  const dateTabs = useAdaptiveTabs(trip.days.length, 116, 82);
   const [routeVisible, setRouteVisible] = useState(true);
   const [modal, setModal] = useState<"settings" | "overview" | null>(null);
   const cards = useRef<Record<string, HTMLDivElement | null>>({});
@@ -149,7 +151,7 @@ export default function TripPlanner({
             <button aria-pressed={mobileView === "list"} onClick={() => switchView("list")}><List size={18} />일정 <span>{day.places.length}</span></button>
           </div>
           <div className="date-toolbar">
-            <div className="date-tabs" role="tablist" aria-label="여행 날짜">
+            <div className="date-tabs" ref={dateTabs.ref} style={dateTabs.style} data-rows={dateTabs.rows} role="tablist" aria-label="여행 날짜">
               {trip.days.map((d, i) => (
                 <button
                   key={d.date}
@@ -157,6 +159,7 @@ export default function TripPlanner({
                   role="tab"
                   aria-selected={dayIndex === i}
                   aria-controls="day-panel"
+                  title={`${d.date} · ${d.title}`}
                   className={`date-tab ${dayIndex === i ? "selected" : ""}`}
                   onClick={() => changeDay(i)}
                 >
