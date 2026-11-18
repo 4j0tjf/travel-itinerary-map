@@ -2,6 +2,9 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
-  define: { "import.meta.env.VITE_GOOGLE_MAPS_API_KEY": JSON.stringify("") },
-  test: { environment: "jsdom", clearMocks: true },
+  test: {
+    environment: "jsdom",
+    clearMocks: true,
+    env: { VITE_GOOGLE_MAPS_API_KEY: "" },
+  },
 });

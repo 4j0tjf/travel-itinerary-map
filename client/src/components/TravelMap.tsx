@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { Day, LocatedPlace } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
+import { routeSegments } from "../services/map-route";
 let mapsPromise: Promise<void> | undefined;
 function loadMaps(key: string) {
   if (window.google?.maps) return Promise.resolve();
@@ -35,8 +36,7 @@ function loadMaps(key: string) {
     });
   return mapsPromise;
 }
-const apiKey = (import.meta as unknown as { env: Record<string, string> }).env
-  .VITE_GOOGLE_MAPS_API_KEY;
+const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 export default function TravelMap({
   day,
   region,
@@ -208,6 +208,29 @@ export default function TravelMap({
     }
   }, [day, ready, onSelect]);
   useEffect(() => {
+    if (!ready || !map.current || !routeVisible || error) return;
+    const lines = routeSegments(day.places).map(([from, to]) =>
+      new google.maps.Polyline({
+        map: map.current,
+        path: [from, to].map(({ lat, lng }) => ({ lat, lng })),
+        clickable: false,
+        strokeOpacity: 0,
+        icons: [{
+          icon: {
+            path: "M 0,-1 0,1",
+            strokeColor: "#285748",
+            strokeOpacity: 0.85,
+            strokeWeight: 3,
+            scale: 2,
+          },
+          offset: "0",
+          repeat: "12px",
+        }],
+      }),
+    );
+    return () => lines.forEach((line) => line.setMap(null));
+  }, [day, ready, routeVisible, error]);
+  useEffect(() => {
     if (!map.current || !selected || !ready) return;
     const previous = previousMapFocus.current;
     previousMapFocus.current = { day: day.date, focus: focusVersion };
@@ -334,9 +357,7 @@ export default function TravelMap({
             stroke="#dce4d3"
           />
           {routeVisible &&
-            day.places.slice(0, -1).map((p, i) => {
-              const next = day.places[i + 1];
-              if (!hasCoordinates(p) || !hasCoordinates(next)) return null;
+            routeSegments(day.places).map(([p, next]) => {
               const a = project(p),
                 b = project(next);
               return (
@@ -348,6 +369,7 @@ export default function TravelMap({
                   y2={b.y}
                   stroke="#769579"
                   strokeWidth="3"
+                  vectorEffect="non-scaling-stroke"
                   strokeDasharray="5 7"
                   opacity=".8"
                 />
