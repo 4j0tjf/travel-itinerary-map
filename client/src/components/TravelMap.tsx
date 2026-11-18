@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import type { Day, LocatedPlace } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
-import { apiKey, loadMaps } from "../services/google-maps";
+import {
+  apiKey,
+  attachSharedMap,
+  detachSharedMap,
+  loadMaps,
+  onAuthFailure,
+} from "../services/google-maps";
 import type { RoadPath } from "../services/road-routes";
 import {
   LABEL_FONT,
@@ -149,37 +155,44 @@ export default function TravelMap({
     previousSelection.current = { day: day.date, focus: focusVersion };
   }, [selectedId, day, focusVersion]);
   useEffect(() => {
-    if (!apiKey) return;
+    const mapHost = container.current;
+    if (!apiKey || !mapHost) return;
     let active = true;
-    const authFailure = () => {
+    let authFailed = false;
+    const stopAuthWatch = onAuthFailure(() => {
+      authFailed = true;
       if (active)
         setError(
           "Google Maps 키 인증에 실패했습니다. 키와 웹사이트 제한을 확인해 주세요.",
         );
-    };
-    (window as unknown as Record<string, unknown>).gm_authFailure = authFailure;
-    loadMaps(apiKey)
-      .then(() => {
-        if (!active || !container.current) return;
-        map.current = new google.maps.Map(container.current, {
-          center: { lat: 0, lng: 0 },
-          zoom: 2,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          zoomControl: false,
-          styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }],
+    });
+    // 지도 로드는 과금 대상이라, 백그라운드에서 다시 열린 탭은 화면에 보일 때까지 기다린다.
+    const start = () => {
+      if (document.visibilityState === "hidden") return;
+      document.removeEventListener("visibilitychange", start);
+      loadMaps(apiKey)
+        .then(() => {
+          if (!active || authFailed) return;
+          const shared = attachSharedMap(mapHost);
+          map.current = shared.map;
+          info.current = shared.info;
+          setReady(true);
+        })
+        .catch((e) => {
+          if (active) setError(e.message);
         });
-        info.current = new google.maps.InfoWindow({ disableAutoPan: true });
-        setReady(true);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
+    };
+    document.addEventListener("visibilitychange", start);
+    start();
     return () => {
       active = false;
+      stopAuthWatch();
+      document.removeEventListener("visibilitychange", start);
       Object.values(markers.current).forEach((marker) => marker.setMap(null));
-      info.current?.close();
+      markers.current = {};
+      detachSharedMap(mapHost);
+      map.current = null;
+      info.current = null;
     };
   }, []);
   useEffect(() => {
@@ -263,8 +276,8 @@ export default function TravelMap({
     });
   }, [selected, ready, day, focusVersion, compact]);
   useEffect(() => {
-    if (map.current) map.current.setMapTypeId(terrain ? "terrain" : "roadmap");
-  }, [terrain]);
+    if (ready && map.current) map.current.setMapTypeId(terrain ? "terrain" : "roadmap");
+  }, [terrain, ready]);
   const width = 1000 / zoom,
     height = baseHeight / zoom;
   const viewLeft = 500 - width / 2 + pan.x;

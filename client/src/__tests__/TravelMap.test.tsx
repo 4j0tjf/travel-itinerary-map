@@ -22,7 +22,7 @@ it("draws Google Maps order lines, toggles them, and retires old lines on day ch
   vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "test-key");
   vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
   const lines: { options: google.maps.PolylineOptions; setMap: ReturnType<typeof vi.fn> }[] = [];
-  const fakeMap = { fitBounds: vi.fn(), setZoom: vi.fn(), setMapTypeId: vi.fn() };
+  const fakeMap = { fitBounds: vi.fn(), setZoom: vi.fn(), setMapTypeId: vi.fn(), setOptions: vi.fn() };
   vi.stubGlobal("google", { maps: {
     Map: class { constructor() { return fakeMap; } },
     InfoWindow: class { close() {} },
@@ -54,6 +54,58 @@ it("draws Google Maps order lines, toggles them, and retires old lines on day ch
   expect(lines[4].options.path).toEqual([{ lat: 35.2, lng: 138.2 }, { lat: 35, lng: 138 }]);
   view.unmount();
   expect(lines[4].setMap).toHaveBeenCalledWith(null);
+});
+
+function stubGoogleMaps() {
+  vi.stubEnv("VITE_GOOGLE_MAPS_API_KEY", "test-key");
+  vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+  const created: HTMLElement[] = [];
+  const markers: { setMap: ReturnType<typeof vi.fn> }[] = [];
+  const fakeMap = { fitBounds: vi.fn(), setZoom: vi.fn(), setMapTypeId: vi.fn(), setOptions: vi.fn() };
+  vi.stubGlobal("google", { maps: {
+    Map: class { constructor(element: HTMLElement) { created.push(element); return fakeMap; } },
+    InfoWindow: class { close() {} },
+    LatLngBounds: class { extend() {} isEmpty() { return false; } },
+    Marker: class { setMap = vi.fn(); addListener() {} constructor() { markers.push(this); } },
+    SymbolPath: { CIRCLE: 0 },
+    Polyline: class { setMap() {} },
+  }});
+  return { created, markers, fakeMap };
+}
+
+it("creates one Google map per page and moves it between screens without leftovers", async () => {
+  const { created, markers, fakeMap } = stubGoogleMaps();
+  const { default: TravelMap } = await import("../components/TravelMap");
+  const props = { day, region: "시즈오카", selectedId: "", focusVersion: 0, onSelect: vi.fn(), onSettings: vi.fn(), routeVisible: false };
+  const first = render(<TravelMap {...props} />);
+  await waitFor(() => expect(markers).toHaveLength(3));
+  const mapElement = created[0];
+  expect(first.container.querySelector(".google-map")?.contains(mapElement)).toBe(true);
+  first.unmount();
+  expect(markers.every((marker) => marker.setMap.mock.calls.some(([map]) => map === null))).toBe(true);
+  expect(fakeMap.setOptions).toHaveBeenCalledWith(expect.objectContaining({ zoom: 2, mapTypeId: "roadmap" }));
+  expect(mapElement.isConnected).toBe(false);
+  const nextDay = { ...day, date: "2026-12-08", places: day.places.slice(0, 2) };
+  const second = render(<TravelMap {...props} day={nextDay} />);
+  await waitFor(() => expect(markers).toHaveLength(5));
+  expect(created).toHaveLength(1);
+  expect(second.container.querySelector(".google-map")?.contains(mapElement)).toBe(true);
+});
+
+it("waits until the page is visible before creating the Google map", async () => {
+  const { created } = stubGoogleMaps();
+  const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+  try {
+    const { default: TravelMap } = await import("../components/TravelMap");
+    render(<TravelMap day={day} region="시즈오카" selectedId="" focusVersion={0} onSelect={vi.fn()} onSettings={vi.fn()} routeVisible={false} />);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(created).toHaveLength(0);
+    visibility.mockReturnValue("visible");
+    document.dispatchEvent(new Event("visibilitychange"));
+    await waitFor(() => expect(created).toHaveLength(1));
+  } finally {
+    visibility.mockRestore();
+  }
 });
 
 it("merges overlapping preview pins, cycles through them, and draws pin numbers above labels", async () => {
