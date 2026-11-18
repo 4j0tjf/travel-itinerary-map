@@ -449,8 +449,8 @@ export default function App() {
                 <span className="page-eyebrow">START WITH A GOOD PLAN</span>
                 <h2>일정과 추천까지, 읽기 편한 세 시트로.</h2>
                 <p>
-                  ChatGPT·Claude에 기존 일정과 함께 붙여 넣으세요. 일정은 유지하고,
-                  가볼 만한 곳과 호텔 후보까지 비교표로 정리합니다.
+                  ChatGPT·Claude에 가고 싶은 곳과 확정 예약을 알려 주세요. 동선과
+                  시작·종료·여유 시간을 설계하고, 빈 구간은 AI 추천으로 보완합니다.
                 </p>
               </div>
               <a

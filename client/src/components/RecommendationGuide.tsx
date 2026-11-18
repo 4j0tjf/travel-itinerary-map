@@ -14,7 +14,8 @@ export default function RecommendationGuide() {
       <div className="workbook-readability-note">
         <strong>생성 파일도 읽기 편하게</strong>
         <p>본문 12pt · 헤더 13pt · 자동 줄바꿈 · 열 너비와 주요 열 고정 · 날짜별 구분을 프롬프트에 포함했어요. 후속 수정에서도 같은 세 시트의 이름·컬럼·서식을 유지하고 데이터만 갱신하도록 안내합니다.</p>
-        <p>기존 일정을 붙여 넣어도 됩니다. 확정한 일정은 유지하고 새 추천은 후보로 정리해요. <strong>지도에 가져오는 것은 ‘여행 일정’ 시트</strong>이며 추천 두 시트는 Excel·Google Sheets에서 참고하세요.</p>
+        <p>장소명·주소에는 실제 클릭 가능한 구글맵 링크를 넣도록 요청합니다. 방문 희망지의 동선을 설계하고 <strong>시작·종료와 앞뒤 여유 시간</strong>을 모두 채워요. 확정 예약은 유지하고, 큰 빈 시간에 넣은 장소는 메모에 <strong>[AI 추천]</strong>으로 표시합니다.</p>
+        <p><strong>지도에 가져오는 것은 ‘여행 일정’ 시트</strong>이며 추천 두 시트는 Excel·Google Sheets에서 참고하세요. 기본적으로 연속 90분 이상 비는 구간을 검토하되, 사용자가 원한 자유시간과 휴식은 유지합니다. 조회하지 못한 이동·체류시간은 계획용 추정으로 구분해요.</p>
       </div>
       <div className="guide-section-heading scoring-heading">
         <h2>추천 점수와 채점 기준</h2>

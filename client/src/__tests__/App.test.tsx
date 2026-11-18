@@ -129,7 +129,12 @@ describe("guide and private travel collection", () => {
     expect(copied).toContain("2. '가볼 만한 곳'");
     expect(copied).toContain("3. '호텔 추천'");
     expect(copied).toContain("본문 12pt, 헤더 13pt");
-    expect(copied).toContain("확정한 날짜·항공·숙소·방문지는 유지");
+    expect(copied).toContain("확정한 항공·예약·숙소");
+    expect(copied).toContain("두 시간 모두 반드시 생성하세요");
+    expect(copied).toContain("네이티브 hyperlink 속성");
+    expect(copied).toContain("연속 90분 이상");
+    expect(copied).toContain("메모 맨 앞에 반드시 '[AI 추천]'");
+    expect(copied).not.toContain("종료시간을 모르면 비워");
     expect(copied).toContain("세부 점수·점수 근거·채점 기준·가정·출처 모음용 탭을 생성하지 마세요");
     fireEvent.click(screen.getByRole("tab", { name: "Claude" }));
     fireEvent.click(screen.getByRole("button", { name: "프롬프트 복사" }));
@@ -160,6 +165,10 @@ describe("guide and private travel collection", () => {
     expect(followup).toContain("[이번 수정·보충 내용]");
     expect(followup).toContain("컬럼이 12/12/13개인지");
     expect(followup).toContain("중첩 프롬프트");
+    expect(followup).toContain("모든 방문 행에 날짜와 시작·종료를 채우고");
+    expect(followup).toContain("앞 장소 종료 + 뒤 여유");
+    expect(followup).toContain("D열 장소명은 모든 방문 행");
+    expect(followup).toContain("큰 빈 시간에 AI 추천 일정 추가");
     expect(followup).toContain("변경 부분만 담은 파일이 아니라");
     expect(followup).toContain("날짜 | 시간 | 종료시간 | 장소명 | 주소 | 위도 | 경도 | 메모 | 이동수단 | 이미지URL | 여행지역 | 여행명");
     expect(screen.queryByRole("dialog")).toBeNull();
