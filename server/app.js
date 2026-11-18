@@ -9,6 +9,7 @@ import { parseExcel } from "./services/excel.js";
 import { HttpError } from "./utils/errors.js";
 import { fetchGoogleSheet, normalizeGoogleSheetLink } from "./services/google-sheets.js";
 import { createWorkbookStorage, exportCurrentItinerary, workbookFilename } from "./services/workbooks.js";
+import { createRouteCache, routeJobs } from "./services/route-cache.js";
 
 export function createApp({
   dataDir = path.join(root, "data"),
@@ -20,6 +21,8 @@ export function createApp({
   const app = express();
   const store = createStore(dataDir);
   const workbooks = createWorkbookStorage(dataDir);
+  const routeCache = createRouteCache(dataDir);
+  app.locals.routeCache = routeCache;
   const auth = createAuth(store);
   app.disable("x-powered-by");
   app.set("trust proxy", "loopback");
@@ -41,7 +44,7 @@ export function createApp({
       );
     next();
   });
-  app.use(express.json({ limit: "16kb" }));
+  app.use((req, res, next) => express.json({ limit: /^\/api\/trips\/[^/]+\/routes$/.test(req.path) ? "1mb" : "16kb" })(req, res, next));
   app.use("/api", auth.attach);
   app.get("/api/health", (_req, res) =>
     res.json({ status: "ok", version: "0.2.0" }),
@@ -160,6 +163,18 @@ export function createApp({
     req.tripSnapshot = owned(await store.read(), req);
     next();
   }
+  app.get("/api/trips/:id/routes", loadOwned, async (req, res) => {
+    const jobs = routeJobs(req.tripSnapshot);
+    const cached = await routeCache.get(req.user.id, req.params.id, jobs.map(job => job.key));
+    res.json({ jobs, cached });
+  });
+  const routeSaveLimiter = rateLimit({ windowMs: 60000, limit: 150, keyGenerator: req => req.user.id,
+    standardHeaders: "draft-8", legacyHeaders: false, message: { error: "경로 저장 요청이 많습니다. 잠시 후 다시 시도해 주세요." } });
+  app.post("/api/trips/:id/routes", routeSaveLimiter, loadOwned, async (req, res) => {
+    const jobs = routeJobs(req.tripSnapshot);
+    const entry = await routeCache.put(req.user.id, req.params.id, jobs.map(job => job.key), req.body?.key, req.body?.path);
+    res.json({ entry });
+  });
   async function replaceTrip(req, file, kind) {
     const snapshot = req.tripSnapshot;
     checkRevision(snapshot, req.body?.revision);
@@ -246,6 +261,7 @@ export function createApp({
       return trip.workbook;
     });
     await workbooks.remove(reference);
+    await routeCache.remove(req.user.id, req.params.id);
     res.status(204).end();
   });
   app.use("/api", (_req, res) =>
@@ -283,6 +299,7 @@ export function createApp({
   const mounted = express();
   mounted.disable("x-powered-by");
   mounted.set("trust proxy", "loopback");
+  mounted.locals.routeCache = routeCache;
   mounted.use(prefix, app);
   mounted.use(app);
   return mounted;

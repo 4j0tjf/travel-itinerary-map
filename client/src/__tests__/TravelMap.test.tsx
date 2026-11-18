@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import type { Day, Place } from "../types";
-import { routeSegments } from "../services/map-route";
+import type { RoadPath } from "../services/road-routes";
 
 const place = (id: string, lat: number | null, lng: number | null): Place => ({
   id, lat, lng, name: id, nameJa: "", time: "09:00", endTime: "10:00",
@@ -16,13 +16,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.resetModules();
-});
-
-it("preserves visit order and leaves gaps at missing coordinates", () => {
-  expect(routeSegments(day.places).map(([a, b]) => [a.id, b.id])).toEqual([["a", "b"], ["b", "c"]]);
-  expect(routeSegments([day.places[0], place("missing", null, null), day.places[2]])).toEqual([]);
-  expect(routeSegments([place("partial", 35, null), day.places[0]])).toEqual([]);
-  expect(routeSegments([day.places[0]])).toEqual([]);
 });
 
 it("draws Google Maps order lines, toggles them, and retires old lines on day change and unmount", async () => {
@@ -42,18 +35,19 @@ it("draws Google Maps order lines, toggles them, and retires old lines on day ch
     },
   }});
   const { default: TravelMap } = await import("../components/TravelMap");
-  const props = { day, region: "시즈오카", selectedId: "", focusVersion: 0, onSelect: vi.fn(), onSettings: vi.fn(), routeVisible: true };
+  const roadPaths: RoadPath[] = [{ key: "first", date: day.date, mode: "DRIVE", path: [{ lat: 35, lng: 138 }, { lat: 35.04, lng: 138.08 }, { lat: 35.1, lng: 138.1 }] }, { key: "second", date: day.date, mode: "WALK", path: [{ lat: 35.1, lng: 138.1 }, { lat: 35.2, lng: 138.2 }] }];
+  const props = { roadPaths, day, region: "시즈오카", selectedId: "", focusVersion: 0, onSelect: vi.fn(), onSettings: vi.fn(), routeVisible: true };
   const view = render(<TravelMap {...props} />);
   await waitFor(() => expect(lines).toHaveLength(2));
-  expect(lines[0].options.path).toEqual([{ lat: 35, lng: 138 }, { lat: 35.1, lng: 138.1 }]);
+  expect(lines[0].options.path).toEqual(roadPaths[0].path);
   expect(lines[0].options.map).toBe(fakeMap);
-  expect(lines[0].options.icons?.[0].icon?.strokeOpacity).toBeGreaterThan(0);
+  expect(lines[0].options.strokeOpacity).toBeGreaterThan(0);
   view.rerender(<TravelMap {...props} routeVisible={false} />);
   expect(lines.every((line) => line.setMap.mock.calls.some(([map]) => map === null))).toBe(true);
   view.rerender(<TravelMap {...props} />);
   await waitFor(() => expect(lines).toHaveLength(4));
   const changed = { ...day, date: "2026-12-08", places: [day.places[2], day.places[0]] };
-  view.rerender(<TravelMap {...props} day={changed} />);
+  view.rerender(<TravelMap {...props} day={changed} roadPaths={[{ ...roadPaths[0], date: changed.date, path: [{ lat: 35.2, lng: 138.2 }, { lat: 35, lng: 138 }] }]} />);
   await waitFor(() => expect(lines).toHaveLength(5));
   expect(lines[2].setMap).toHaveBeenCalledWith(null);
   expect(lines[3].setMap).toHaveBeenCalledWith(null);

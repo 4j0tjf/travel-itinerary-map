@@ -1,0 +1,81 @@
+import { useEffect, useState } from "react";
+import type { Itinerary } from "../types";
+import { request } from "./api";
+import { apiKey, loadMaps } from "./google-maps";
+
+export type RoadPoint = { lat: number; lng: number };
+export type RoadPath = { key: string; date: string; mode: "DRIVE" | "WALK"; path: RoadPoint[] };
+export type RouteJob = Omit<RoadPath, "path"> & { stops: RoadPoint[] };
+type Geometry = { path: RoadPoint[]; expiresAt: number };
+type RouteResult = { paths: RoadPath[]; failed: number; warnings: string[]; saveFailed: boolean };
+type RouteLibrary = { Route: { computeRoutes(request: Record<string, unknown>): Promise<{ routes?: { path?: RoadPoint[]; warnings?: string[] }[] }> } };
+const pending = new Map<string, Promise<RouteResult>>();
+
+export function loadRoadRoutes(trip: Itinerary): Promise<RouteResult> {
+  const version = `${trip.id}:${trip.source?.importedAt || trip.updatedAt}`;
+  const existing = pending.get(version);
+  if (existing) return existing;
+  const operation = (async () => {
+    const endpoint = `/trips/${encodeURIComponent(trip.id)}/routes`;
+    const { jobs, cached } = await request<{ jobs: RouteJob[]; cached: Record<string, Geometry> }>(endpoint);
+    const result: RouteResult = { paths: [], failed: 0, warnings: [], saveFailed: false };
+    const unique = new Map<string, Promise<RoadPoint[]>>();
+    let library: Promise<RouteLibrary> | undefined;
+    const geometry = (job: RouteJob) => {
+      if (cached[job.key]?.expiresAt > Date.now()) return Promise.resolve(cached[job.key].path);
+      if (!unique.has(job.key)) unique.set(job.key, (async () => {
+        library ??= loadMaps(apiKey).then(() => google.maps.importLibrary("routes") as unknown as Promise<RouteLibrary>);
+        const { Route } = await library;
+        const options = {
+          origin: job.stops[0], destination: job.stops.at(-1),
+          intermediates: job.stops.slice(1, -1).map(location => ({ location })),
+          travelMode: job.mode === "WALK" ? "WALKING" : "DRIVING",
+          ...(job.mode === "DRIVE" ? { routingPreference: "TRAFFIC_UNAWARE" } : {}),
+          optimizeWaypointOrder: false, fields: ["path", "warnings"],
+        };
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const response = await Promise.race([
+          Route.computeRoutes(options),
+          new Promise<never>((_resolve, reject) => { timer = setTimeout(() => reject(new Error("경로 조회 시간 초과")), 25000); }),
+        ]).finally(() => clearTimeout(timer));
+        const route = response.routes?.[0];
+        if (!route?.path || route.path.length < 2) throw new Error("조회 가능한 경로가 없습니다.");
+        const path = route.path.map(({ lat, lng }) => ({ lat, lng }));
+        result.warnings.push(...(route.warnings || []));
+        try { await request(endpoint, { method: "POST", body: JSON.stringify({ key: job.key, path }) }); }
+        catch { result.saveFailed = true; }
+        return path;
+      })());
+      return unique.get(job.key)!;
+    };
+    // Two workers limit browser requests while preparing every date once.
+    let index = 0;
+    await Promise.all([0, 1].map(async () => {
+      while (index < jobs.length) {
+        const job = jobs[index++];
+        try { result.paths.push({ key: job.key, date: job.date, mode: job.mode, path: await geometry(job) }); }
+        catch { result.failed++; }
+      }
+    }));
+    return result;
+  })();
+  pending.set(version, operation);
+  void operation.finally(() => pending.delete(version)).catch(() => {});
+  return operation;
+}
+
+export function useRoadRoutes(trip: Itinerary) {
+  const [retry, setRetry] = useState(0);
+  const [state, setState] = useState<RouteResult & { loading: boolean; error: string }>({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: Boolean(apiKey), error: "" });
+  useEffect(() => {
+    let active = true;
+    setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: Boolean(apiKey), error: apiKey ? "" : "지도 키가 없어 경로를 조회할 수 없습니다." });
+    if (apiKey) loadRoadRoutes(trip).then(result => {
+      if (active) setState({ ...result, loading: false, error: result.failed ? `경로 ${result.failed}건을 조회하지 못했습니다. Routes API 권한·할당량 또는 해당 구간을 확인해 주세요.` : "" });
+    }).catch(() => {
+      if (active) setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: false, error: "경로를 불러오지 못했습니다. 연결과 로그인 상태를 확인해 주세요." });
+    });
+    return () => { active = false; };
+  }, [trip.id, trip.source?.importedAt, trip.updatedAt, retry]);
+  return { ...state, retry: () => setRetry(value => value + 1) };
+}

@@ -12,31 +12,8 @@ import {
 } from "lucide-react";
 import type { Day, LocatedPlace } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
-import { routeSegments } from "../services/map-route";
-let mapsPromise: Promise<void> | undefined;
-function loadMaps(key: string) {
-  if (window.google?.maps) return Promise.resolve();
-  if (!mapsPromise)
-    mapsPromise = new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&language=ko&loading=async&callback=__travelMapsReady`;
-      const timeout = window.setTimeout(
-        () => reject(new Error("Google Maps 연결 시간이 초과되었습니다.")),
-        20000,
-      );
-      (window as unknown as Record<string, unknown>).__travelMapsReady = () => {
-        clearTimeout(timeout);
-        resolve();
-      };
-      script.onerror = () => {
-        clearTimeout(timeout);
-        reject(new Error("Google Maps 연결을 확인해 주세요."));
-      };
-      document.head.appendChild(script);
-    });
-  return mapsPromise;
-}
-const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+import { apiKey, loadMaps } from "../services/google-maps";
+import type { RoadPath } from "../services/road-routes";
 export default function TravelMap({
   day,
   region,
@@ -45,6 +22,7 @@ export default function TravelMap({
   onSelect,
   onSettings,
   routeVisible,
+  roadPaths = [],
 }: {
   day: Day;
   region: string;
@@ -53,6 +31,7 @@ export default function TravelMap({
   onSelect: (id: string) => void;
   onSettings: () => void;
   routeVisible: boolean;
+  roadPaths?: RoadPath[];
 }) {
   const host = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
@@ -209,27 +188,25 @@ export default function TravelMap({
   }, [day, ready, onSelect]);
   useEffect(() => {
     if (!ready || !map.current || !routeVisible || error) return;
-    const lines = routeSegments(day.places).map(([from, to]) =>
+    const lines = roadPaths.map((route) =>
       new google.maps.Polyline({
         map: map.current,
-        path: [from, to].map(({ lat, lng }) => ({ lat, lng })),
+        path: route.path,
         clickable: false,
-        strokeOpacity: 0,
-        icons: [{
-          icon: {
-            path: "M 0,-1 0,1",
-            strokeColor: "#285748",
-            strokeOpacity: 0.85,
-            strokeWeight: 3,
-            scale: 2,
-          },
-          offset: "0",
-          repeat: "12px",
-        }],
+        strokeColor: route.mode === "WALK" ? "#8b5c27" : "#2468c5",
+        strokeOpacity: 0.9,
+        strokeWeight: 5,
       }),
     );
     return () => lines.forEach((line) => line.setMap(null));
-  }, [day, ready, routeVisible, error]);
+  }, [day, ready, routeVisible, error, roadPaths]);
+  useEffect(() => {
+    if (!ready || !map.current || !roadPaths.length) return;
+    const bounds = new google.maps.LatLngBounds();
+    day.places.filter(hasCoordinates).forEach(p => bounds.extend(p));
+    roadPaths.forEach(route => route.path.forEach(point => bounds.extend(point)));
+    map.current.fitBounds(bounds, 75);
+  }, [day, ready, roadPaths]);
   useEffect(() => {
     if (!map.current || !selected || !ready) return;
     const previous = previousMapFocus.current;
@@ -356,25 +333,6 @@ export default function TravelMap({
             fill="none"
             stroke="#dce4d3"
           />
-          {routeVisible &&
-            routeSegments(day.places).map(([p, next]) => {
-              const a = project(p),
-                b = project(next);
-              return (
-                <line
-                  key={p.id}
-                  x1={a.x}
-                  y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
-                  stroke="#769579"
-                  strokeWidth="3"
-                  vectorEffect="non-scaling-stroke"
-                  strokeDasharray="5 7"
-                  opacity=".8"
-                />
-              );
-            })}
           {day.places.map((p, i) => {
             if (!hasCoordinates(p)) return null;
             const point = project(p),
@@ -539,7 +497,7 @@ export default function TravelMap({
           {error ||
             (!apiKey
               ? "실제 지도·도로 경로가 아닌 상대 위치입니다"
-              : "© Google Maps · 도로 경로 미계산")}
+              : "© Google Maps · 자동차 파랑 / 도보 갈색")}
         </span>
       </div>
     </div>

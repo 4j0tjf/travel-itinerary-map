@@ -2460,6 +2460,17 @@ textarea {
   color: #8da578;
   font-size: 16px;
 }
+.road-route-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 20px;
+  background: #f4f7ef;
+  color: #465747;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.road-route-status .text-action { align-self: flex-start; }
 .no-coordinates {
   position: absolute;
   inset: 20% 12% 25%;

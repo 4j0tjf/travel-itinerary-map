@@ -34,7 +34,7 @@ async function requestResponse(url: string, options: RequestInit = {}): Promise<
   }
   return response;
 }
-async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+export async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await requestResponse(url, options);
   return response.status === 204 ? (undefined as T) : response.json();
 }

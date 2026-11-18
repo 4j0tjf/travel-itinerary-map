@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -21,6 +21,7 @@ import type { Itinerary } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
 import TravelMap from "./TravelMap";
 import Dialog from "./Dialog";
+import { useRoadRoutes } from "../services/road-routes";
 const weekday = (date: string) =>
   new Date(date + "T12:00:00").toLocaleDateString("ko-KR", { weekday: "long" });
 const shortDate = (date: string) =>
@@ -49,6 +50,8 @@ export default function TripPlanner({
   const [modal, setModal] = useState<"settings" | "overview" | null>(null);
   const cards = useRef<Record<string, HTMLDivElement | null>>({});
   const day = trip.days[dayIndex];
+  const routes = useRoadRoutes(trip);
+  const dayRoutes = useMemo(() => routes.paths.filter(path => path.date === day?.date), [routes.paths, day?.date]);
   const selectPlace = useCallback((id: string) => {
     setSelectedId(id);
     setFocusVersion((version) => version + 1);
@@ -157,7 +160,16 @@ export default function TripPlanner({
             onSelect={selectPlace}
             onSettings={() => setModal("settings")}
             routeVisible={routeVisible}
+            roadPaths={dayRoutes}
           />
+          <div className="road-route-status" role="status">
+            <span>{routes.loading ? "전체 날짜의 길찾기 경로를 준비하고 있어요…" : routes.error ||
+              (dayRoutes.length ? "자동차는 파랑, 도보는 갈색 경로입니다. 실시간 교통은 반영하지 않습니다." : "이 날짜에는 표시 가능한 자동차·도보 경로가 없습니다.")}</span>
+            {routes.saveFailed && <span>경로를 저장하지 못했습니다. 다음 접속 시 다시 조회될 수 있습니다.</span>}
+            {!routes.loading && (routes.error || routes.saveFailed) && <button className="text-action" onClick={routes.retry}>경로 다시 조회</button>}
+            {day.places.some(p => p.mode === "WALK") && <span>도보 경로에 보도나 보행자 통로가 없을 수 있습니다. 현장 표지와 안전한 통행로를 확인하세요.</span>}
+            {routes.warnings.length > 0 && <div aria-label="길찾기 안내">{[...new Set(routes.warnings)].map(warning => <p key={warning}>{warning}</p>)}</div>}
+          </div>
           <div className="journey-note">
             <span className="journey-note-icon">
               <Route size={17} />
@@ -241,7 +253,7 @@ export default function TripPlanner({
                   aria-pressed={routeVisible}
                 >
                   <Route size={14} />
-                  {routeVisible ? "순서선 켜짐" : "순서선 꺼짐"}
+                  {routeVisible ? "경로 켜짐" : "경로 꺼짐"}
                 </button>
               </div>
             </div>
@@ -348,7 +360,7 @@ export default function TripPlanner({
                               : "기타 이동수단"}
                         </span>
                         <span className="leg-dot">·</span>
-                        <span>도로 경로 미계산</span>
+                        <span>{routes.loading ? "경로 조회 중" : p.mode === "OTHER" ? "경로 미지원" : "지도 경로 참고"}</span>
                       </div>
                     )}
                   </div>
@@ -375,9 +387,9 @@ export default function TripPlanner({
               <div className="info-note">
                 <Info size={17} />
                 <p>
-                  키가 없을 때에는 좌표의 상대 위치만 표시합니다. 순서선은 실제
-                  도로 경로가 아니며, 좌표가 없는 구간을 임의로 연결하지
-                  않습니다.
+                  자동차·도보 이동은 Google 길찾기 경로로 표시합니다. 같은 이동수단의
+                  연속 구간은 묶어 조회하며 방문 순서를 유지합니다. 좌표가 없는 구간과
+                  기타 이동수단은 임의로 연결하지 않습니다. 키가 없으면 상대 위치만 표시합니다.
                 </p>
               </div>
               <ol className="setup-steps">
@@ -388,7 +400,7 @@ export default function TripPlanner({
                   </code>
                 </li>
                 <li>
-                  Maps JavaScript API를 활성화하고, 웹사이트 제한에{" "}
+                  Maps JavaScript API와 Routes API를 활성화하고, 웹사이트 제한에{" "}
                   <code>https://19991115.xyz/*</code>를 추가하세요.
                 </li>
                 <li>
