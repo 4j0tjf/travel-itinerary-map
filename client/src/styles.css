@@ -457,15 +457,18 @@ h1 {
   cursor: pointer;
   outline: none;
 }
-.sample-map .map-pin:focus > circle {
+.sample-map .map-pin:focus > .pin-body {
   stroke: #e0b76d;
   stroke-width: 4;
+}
+.sample-map .map-label {
+  cursor: pointer;
 }
 .terrain-off .terrain-shapes,
 .terrain-off .contours {
   opacity: 0;
 }
-.map-pin:hover > circle:not(:first-child) {
+.map-pin:hover > .pin-body {
   stroke: #749867;
 }
 .map-labels {
@@ -1872,7 +1875,8 @@ h1 {
   .overview-day-number {
     font-size: 22px;
   }
-  .map-pin text {
+  .map-pin text,
+  .map-label text {
     font-family: "Noto Sans KR", sans-serif;
   }
 }

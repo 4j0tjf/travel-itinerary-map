@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, render, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Day, Place } from "../types";
 import type { RoadPath } from "../services/road-routes";
 
@@ -54,4 +54,34 @@ it("draws Google Maps order lines, toggles them, and retires old lines on day ch
   expect(lines[4].options.path).toEqual([{ lat: 35.2, lng: 138.2 }, { lat: 35, lng: 138 }]);
   view.unmount();
   expect(lines[4].setMap).toHaveBeenCalledWith(null);
+});
+
+it("merges overlapping preview pins, cycles through them, and draws pin numbers above labels", async () => {
+  vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+  const { default: TravelMap } = await import("../components/TravelMap");
+  const named = (id: string, name: string, lat: number, lng: number) => ({ ...place(id, lat, lng), name });
+  const preview: Day = {
+    ...day,
+    places: [
+      named("p1", "구노잔 도쇼구 (久能山東照宮)", 34.96, 138.47),
+      named("p2", "프레지오 호텔 (ホテルプレジオ)", 34.975, 138.385),
+      named("p3", "슨푸성 공원", 34.98, 138.383),
+      named("p4", "프레지오 호텔 (ホテルプレジオ)", 34.97505, 138.38505),
+    ],
+  };
+  const onSelect = vi.fn();
+  const props = { day: preview, region: "시즈오카", selectedId: "p1", focusVersion: 0, onSelect, onSettings: vi.fn(), routeVisible: true };
+  const view = render(<TravelMap {...props} />);
+  const hotel = "2·4. 프레지오 호텔 (ホテルプレジオ)";
+  fireEvent.click(screen.getByRole("button", { name: hotel }));
+  expect(onSelect).toHaveBeenLastCalledWith("p2");
+  view.rerender(<TravelMap {...props} selectedId="p2" />);
+  fireEvent.click(screen.getByRole("button", { name: hotel }));
+  expect(onSelect).toHaveBeenLastCalledWith("p4");
+  expect(screen.getByRole("button", { name: "3. 슨푸성 공원" })).toBeTruthy();
+  expect(screen.getByText("구노잔 도쇼구")).toBeTruthy();
+  expect(screen.getAllByText("프레지오 호텔")).toHaveLength(1);
+  const labels = view.container.querySelector(".map-label-layer")!;
+  const pins = view.container.querySelector(".map-pin-layer")!;
+  expect(labels.compareDocumentPosition(pins) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

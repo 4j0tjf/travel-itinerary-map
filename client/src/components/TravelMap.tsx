@@ -14,6 +14,19 @@ import type { Day, LocatedPlace } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
 import { apiKey, loadMaps } from "../services/google-maps";
 import type { RoadPath } from "../services/road-routes";
+import {
+  LABEL_FONT,
+  MOBILE_LABEL_FONT,
+  clusterLabel,
+  clusterPins,
+  clusterText,
+  fitLabel,
+  labelBox,
+  placeLabels,
+  slotOrder,
+  textWidth,
+  type Box,
+} from "../services/label-layout";
 export default function TravelMap({
   day,
   region,
@@ -49,6 +62,8 @@ export default function TravelMap({
   const [aspect, setAspect] = useState(1.3);
   const [viewportWidth, setViewportWidth] = useState(1000);
   const [terrain, setTerrain] = useState(false);
+  const [peekKey, setPeekKey] = useState("");
+  const [, setFontsLoaded] = useState(0);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null,
   );
@@ -112,6 +127,14 @@ export default function TravelMap({
     setZoom(1);
     setPan({ x: 0, y: 0 });
   }, [day]);
+  useEffect(() => {
+    // 웹 글꼴이 늦게 오면 이름표 폭을 다시 잰다.
+    let active = true;
+    document.fonts?.ready.then(() => active && setFontsLoaded((v) => v + 1));
+    return () => {
+      active = false;
+    };
+  }, []);
   useEffect(() => {
     const previous = previousSelection.current;
     if (
@@ -244,6 +267,93 @@ export default function TravelMap({
   }, [terrain]);
   const width = 1000 / zoom,
     height = baseHeight / zoom;
+  const viewLeft = 500 - width / 2 + pan.x;
+  const viewTop = baseHeight / 2 - height / 2 + pan.y;
+  const pinScale = width / viewportWidth;
+  const previewMode = !apiKey || Boolean(error);
+  const compactLabels = viewportWidth < 600;
+  const labelFont =
+    typeof window !== "undefined" && window.matchMedia?.("(max-width: 760px)")?.matches
+      ? MOBILE_LABEL_FONT
+      : LABEL_FONT;
+  const labelView: Box = { x: 0, y: 0, w: viewportWidth, h: viewportWidth / aspect };
+  // 화면 픽셀 기준으로 겹치는 핀은 묶고(예: "3·6"), 이름표는 빈 자리를 찾아 놓는다.
+  const pinGroups = previewMode
+    ? clusterPins(
+        day.places.flatMap((p, i) => {
+          if (!hasCoordinates(p)) return [];
+          const point = project(p);
+          return [{ item: p, number: i + 1, x: (point.x - viewLeft) / pinScale, y: (point.y - viewTop) / pinScale }];
+        }),
+      ).map((cluster) => {
+        const active = cluster.items.some((p) => p.id === selectedId);
+        const radius = active ? 20 : 17;
+        const text = clusterText(cluster.numbers);
+        const label = fitLabel(clusterLabel(cluster.items.map((p) => p.name)), labelFont);
+        return {
+          ...cluster,
+          key: cluster.items[0].id,
+          active,
+          priority: active,
+          radius,
+          halfWidth:
+            cluster.items.length > 1 ? Math.max(radius, Math.ceil(textWidth(text, 700, labelFont) / 2) + 12) : radius,
+          text,
+          label: label.text,
+          labelWidth: label.width,
+          svgX: viewLeft + cluster.x * pinScale,
+          svgY: viewTop + cluster.y * pinScale,
+        };
+      })
+    : [];
+  type PinGroup = (typeof pinGroups)[number];
+  const labelBoxes = placeLabels(pinGroups, labelView, {
+    wanted: (group) => !compactLabels || group.active,
+    preferAbove: compactLabels,
+  });
+  // 자리를 못 받은 이름표는 선택했거나 호버·포커스할 때만 맨 위에 띄운다.
+  const floatingLabels = pinGroups
+    .filter((group) => !labelBoxes.has(group.key) && (group.active || group.key === peekKey))
+    .map((group) => ({
+      group,
+      box: labelBox(group, slotOrder(group, labelView, compactLabels)[0], labelView),
+    }));
+  const placedLabels = pinGroups
+    .filter((group) => labelBoxes.has(group.key))
+    .sort((a, b) => Number(a.active) - Number(b.active))
+    .map((group) => ({ group, box: labelBoxes.get(group.key)! }));
+  const selectGroup = (group: PinGroup) => {
+    // 묶음 핀은 누를 때마다 안의 장소를 차례로 고른다.
+    const current = group.items.findIndex((p) => p.id === selectedId);
+    onSelect(group.items[(current + 1) % group.items.length].id);
+  };
+  const peek = (key: string) => () => setPeekKey(key);
+  const unpeek = (key: string) => () => setPeekKey((current) => (current === key ? "" : current));
+  const renderLabel = ({ group, box }: { group: PinGroup; box: Box }) => (
+    <g
+      key={group.key}
+      className="map-label"
+      data-marker="true"
+      aria-hidden="true"
+      transform={`translate(${group.svgX} ${group.svgY}) scale(${pinScale})`}
+      onClick={() => selectGroup(group)}
+      onPointerEnter={peek(group.key)}
+      onPointerLeave={unpeek(group.key)}
+    >
+      <rect
+        x={box.x - group.x}
+        y={box.y - group.y}
+        width={box.w}
+        height={box.h}
+        rx="6"
+        fill="#fffefa"
+        filter="url(#pin-shadow)"
+      />
+      <text x={box.x - group.x + 10} y={box.y - group.y + 22} fill="#344a35" style={{ fontSize: 14 }}>
+        {group.label}
+      </text>
+    </g>
+  );
   return (
     <div ref={host} className="travel-map">
       {apiKey && !error ? (
@@ -341,68 +451,75 @@ export default function TravelMap({
             fill="none"
             stroke="#dce4d3"
           />
-          {day.places.map((p, i) => {
-            if (!hasCoordinates(p)) return null;
-            const point = project(p),
-              active = p.id === selectedId;
-            const pinScale = width / viewportWidth;
-            const labelText = p.name.length > 16 ? p.name.slice(0, 15) + "…" : p.name;
-            const labelWidth = Math.min(labelText.length * 14 + 20, 260);
-            const labelOnLeft = (point.x - (500 - width / 2 + pan.x)) / width > 0.58;
-            const labelY = viewportWidth < 600 ? -62 : -17;
-            return (
-              <g
-                key={p.id}
-                data-marker="true"
-                role="button"
-                tabIndex={0}
-                aria-label={`${i + 1}. ${p.name}`}
-                aria-pressed={active}
-                className="map-pin"
-                transform={`translate(${point.x} ${point.y}) scale(${pinScale})`}
-                onClick={() => onSelect(p.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelect(p.id);
-                  }
-                }}
-              >
-                {active && <circle r="30" fill="#285748" opacity=".1" />}
-                <circle
-                  r={active ? 20 : 17}
-                  fill={active ? "#285748" : "#fffefa"}
-                  stroke={active ? "#fff" : "#5b7c58"}
-                  strokeWidth="2.5"
-                  filter="url(#pin-shadow)"
-                />
-                <text
-                  textAnchor="middle"
-                  y="5"
-                  fill={active ? "white" : "#285748"}
-                  fontSize="14"
-                  style={{ fontSize: 14 }}
-                  fontWeight="700"
+          {/* 그리는 순서: 이름표 → 핀 → 띄운 이름표. 핀 번호가 이름표에 가려지지 않는다. */}
+          <g className="map-label-layer">{placedLabels.map(renderLabel)}</g>
+          <g className="map-pin-layer">
+            {pinGroups.map((group) => {
+              const multiple = group.items.length > 1;
+              const names = [...new Set(group.items.map((p) => p.name))].join(", ");
+              return (
+                <g
+                  key={group.key}
+                  data-marker="true"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${group.numbers.join("·")}. ${names}`}
+                  aria-pressed={group.active}
+                  className="map-pin"
+                  transform={`translate(${group.svgX} ${group.svgY}) scale(${pinScale})`}
+                  onClick={() => selectGroup(group)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectGroup(group);
+                    }
+                  }}
+                  onPointerEnter={peek(group.key)}
+                  onPointerLeave={unpeek(group.key)}
+                  onFocus={peek(group.key)}
+                  onBlur={unpeek(group.key)}
                 >
-                  {i + 1}
-                </text>
-                {(viewportWidth >= 600 || active) && <>
-                <rect
-                  x={labelOnLeft ? -labelWidth - 26 : 26}
-                  y={labelY}
-                  width={labelWidth}
-                  height="34"
-                  rx="6"
-                  fill="#fffefa"
-                  filter="url(#pin-shadow)"
-                />
-                <text x={labelOnLeft ? -labelWidth - 16 : 36} y={labelY + 22} fill="#344a35" style={{ fontSize: 14 }}>
-                  {labelText}
-                </text>
-                </>}
-              </g>
-            );
-          })}
+                  {group.active && <circle r="30" fill="#285748" opacity=".1" />}
+                  {multiple ? (
+                    <rect
+                      className="pin-body"
+                      x={-group.halfWidth}
+                      y={-group.radius}
+                      width={group.halfWidth * 2}
+                      height={group.radius * 2}
+                      rx={group.radius}
+                      fill={group.active ? "#285748" : "#fffefa"}
+                      stroke={group.active ? "#fff" : "#5b7c58"}
+                      strokeWidth="2.5"
+                      filter="url(#pin-shadow)"
+                    />
+                  ) : (
+                    <circle
+                      className="pin-body"
+                      r={group.radius}
+                      fill={group.active ? "#285748" : "#fffefa"}
+                      stroke={group.active ? "#fff" : "#5b7c58"}
+                      strokeWidth="2.5"
+                      filter="url(#pin-shadow)"
+                    />
+                  )}
+                  <text
+                    textAnchor="middle"
+                    y="5"
+                    fill={group.active ? "white" : "#285748"}
+                    fontSize="14"
+                    style={{ fontSize: 14 }}
+                    fontWeight="700"
+                  >
+                    {group.text}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+          <g className="map-floating-labels" pointerEvents="none">
+            {floatingLabels.map(renderLabel)}
+          </g>
         </svg>
       )}
       <div className="map-location">
