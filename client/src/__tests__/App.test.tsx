@@ -128,7 +128,7 @@ describe("guide and private travel collection", () => {
     expect(copied).toContain("1. '여행 일정'");
     expect(copied).toContain("2. '가볼 만한 곳'");
     expect(copied).toContain("3. '호텔 추천'");
-    expect(copied).toContain("본문 12pt 이상");
+    expect(copied).toContain("본문 12pt, 헤더 13pt");
     expect(copied).toContain("확정한 날짜·항공·숙소·방문지는 유지");
     expect(copied).toContain("세부 점수·점수 근거·채점 기준·가정·출처 모음용 탭을 생성하지 마세요");
     fireEvent.click(screen.getByRole("tab", { name: "Claude" }));
@@ -143,6 +143,26 @@ describe("guide and private travel collection", () => {
       screen.getByText("로그인하고, 나의 여행을 펼쳐 보세요."),
     ).toBeTruthy();
     expect(screen.queryByRole("tablist", { name: "등록된 여행" })).toBeNull();
+  });
+
+  it("copies the full fixed format again for follow-up changes", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ user: null })));
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "프롬프트 복사" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalled());
+    const initial = writeText.mock.lastCall?.[0] as string;
+    fireEvent.click(screen.getByRole("button", { name: "후속 수정용 문구 복사" }));
+    await screen.findByRole("button", { name: "후속 문구 복사했어요" });
+    const followup = writeText.mock.lastCall?.[0] as string;
+    const begin = "[양식 고정 계약: TRAVEL_WORKBOOK_V1]";
+    const initialContract = initial.slice(initial.indexOf(begin), initial.indexOf("[내 여행 정보"));
+    expect(followup).toContain(initialContract.trim());
+    expect(followup).toContain("[이번 수정·보충 내용]");
+    expect(followup).toContain("컬럼이 12/12/13개인지");
+    expect(followup).toContain("중첩 프롬프트");
+    expect(followup).toContain("변경 부분만 담은 파일이 아니라");
+    expect(followup).toContain("날짜 | 시간 | 종료시간 | 장소명 | 주소 | 위도 | 경도 | 메모 | 이동수단 | 이미지URL | 여행지역 | 여행명");
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("starts with zero tabs, imports a workbook, switches dates, renames and deletes the travel tab", async () => {

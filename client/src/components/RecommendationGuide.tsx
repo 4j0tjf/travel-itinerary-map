@@ -13,7 +13,7 @@ export default function RecommendationGuide() {
       </div>
       <div className="workbook-readability-note">
         <strong>생성 파일도 읽기 편하게</strong>
-        <p>본문 12pt 이상 · 자동 줄바꿈 · 충분한 열 너비 · 헤더와 주요 열 고정 · 날짜별 구분을 프롬프트에 포함했어요. 추천·채점 근거용 탭이 계속 늘어나지 않도록 파일은 세 시트로 제한합니다.</p>
+        <p>본문 12pt · 헤더 13pt · 자동 줄바꿈 · 열 너비와 주요 열 고정 · 날짜별 구분을 프롬프트에 포함했어요. 후속 수정에서도 같은 세 시트의 이름·컬럼·서식을 유지하고 데이터만 갱신하도록 안내합니다.</p>
         <p>기존 일정을 붙여 넣어도 됩니다. 확정한 일정은 유지하고 새 추천은 후보로 정리해요. <strong>지도에 가져오는 것은 ‘여행 일정’ 시트</strong>이며 추천 두 시트는 Excel·Google Sheets에서 참고하세요.</p>
       </div>
       <div className="guide-section-heading scoring-heading">

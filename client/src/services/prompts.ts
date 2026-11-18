@@ -1,7 +1,10 @@
 import { evidenceRules, recommendationRubrics, workbookSheets } from "./recommendations";
+import { fixedWorkbookFormat, workbookDeliveryRules } from "./workbook-format";
 
 export function itineraryPrompt(model: "ChatGPT" | "Claude") {
   return `당신은 여행 계획을 읽기 쉬운 Excel로 정리하는 도우미입니다. ${model}에서 아래 내용을 검토하고, 여행 지도 웹앱에 업로드할 수 있는 .xlsx 파일 한 개를 만들어 주세요.
+
+${fixedWorkbookFormat}
 
 [내 여행 정보 — 작성 후 요청하세요]
 여행 지역 / 여행 이름:
@@ -24,8 +27,8 @@ export function itineraryPrompt(model: "ChatGPT" | "Claude") {
 - 새 추천은 확정 일정에 자동으로 추가하거나 기존 장소와 교체하지 말고 추천 시트에 후보로 제시하세요.
 - 명확한 충돌은 먼저 알려 주세요. 임의로 시간을 확정하거나 사실과 추정을 섞지 마세요.
 
-[생성할 시트 — 아래 순서로 정확히 3개]
-${workbookSheets.map((sheet, index) => `${index + 1}. '${sheet.name}'\n${sheet.description}\n첫 행 컬럼: ${sheet.columns.join(" | ")}`).join("\n\n")}
+[각 시트의 용도 — 위 고정 계약 안에서 작성]
+${workbookSheets.map((sheet) => `- '${sheet.name}': ${sheet.description}`).join("\n")}
 
 [1. 여행 일정 작성 규칙]
 - '여행 일정'을 첫 번째 시트로 두고 A1부터 위 컬럼을 정확히 사용하세요. 제목·설명 행을 헤더 위에 넣지 마세요.
@@ -55,19 +58,9 @@ ${workbookSheets.map((sheet, index) => `${index + 1}. '${sheet.name}'\n${sheet.d
 ${recommendationRubrics.map((rubric) => `${rubric.title} (100점):\n${rubric.items.map((item) => `- ${item.name} ${item.weight}점: ${item.rule}`).join("\n")}`).join("\n\n")}
 ${evidenceRules.map((rule) => `- ${rule}`).join("\n")}
 
-[읽기 쉬운 파일 서식 — 반드시 적용]
-- 본문 12pt 이상, 헤더 13pt 굵게, 한글 글꼴은 맑은 고딕 또는 Noto Sans KR을 사용하세요. 글자를 줄여 셀에 맞추는 기능은 사용하지 마세요.
-- 헤더는 짙은 녹색/남색 바탕과 흰 글자, 본문은 흰색과 연한 색의 교차 행으로 구분하세요. 중요한 상태는 색과 함께 ‘조건부/미확인’ 텍스트로 표시하세요.
-- 모든 설명 셀은 자동 줄바꿈과 위쪽 정렬을 사용하고, 헤더 높이는 32pt 이상·본문은 36pt 이상에서 내용에 맞게 늘리세요. 텍스트가 잘리거나 옆 셀로 넘치지 않게 확인하세요.
-- 열 너비는 날짜 14, 시간 10, 장소·호텔명 24~30, 주소·설명 32~42, 짧은 상태 14~18 정도로 배분하세요. 긴 셀은 2~3문장 이내로 요약하고 핵심을 앞에 쓰세요.
-- 첫 행 헤더와 주요 식별 열(일정은 A:D, 추천은 A:C)을 고정하고 자동필터를 설정하세요. 그리드선은 숨기고 얇은 구분선으로 읽기 쉽게 만드세요.
-- 일정 시트는 날짜가 바뀌는 지점에 구분선을 넣으세요. 업로드용 좌표·이미지URL·여행지역·여행명 열은 삭제하지 말고 기본 보기에서 접거나 숨겨 가독성을 높일 수 있습니다.
-- 지도·공식·예약 링크는 긴 URL 전체 대신 ‘지도 열기’, ‘공식 안내’, ‘예약 확인’ 같은 클릭 가능한 짧은 문구로 표시하세요.
-- 인쇄는 가로 방향·머리글 행 반복으로 설정하고, 한 페이지에 전부 밀어 넣으려고 글자를 축소하지 마세요. 열이 많으면 여러 페이지를 허용하세요.
+[읽기 쉬운 파일 서식 — 매 수정에도 동일 적용]
+- 이 프롬프트 맨 위의 고정 양식 계약에 적힌 글꼴·글자 크기·색·행 높이·열 너비·숨김 열·고정 창을 최초 생성과 매 후속 수정에 동일하게 적용하세요. 기존 파일이나 새 예시의 임의 서식으로 바꾸지 마세요.
 - '여행 일정' 외의 추천 시트는 읽고 비교하는 용도입니다. 웹앱 지도에는 여행 일정만 가져옵니다.
 
-[최종 전달]
-- 파일 생성 도구가 있으면 위 서식을 적용한 .xlsx를 첨부하세요. 수식·매크로·외부 데이터 연결은 넣지 마세요.
-- 파일 생성 도구가 없으면 3개 시트별 TSV를 각각 제공하고 같은 이름의 탭에 붙여 넣는 방법과 서식 적용 방법을 알려 주세요. TSV만으로 글자 크기·색·줄바꿈 서식이 저장되는 것처럼 설명하지 마세요.
-- 첫 시트 필수 컬럼·날짜/시간·주소/좌표, 3개 탭 구성, 텍스트 잘림과 열 너비, 미확인 정보 표시를 확인한 뒤 전달하세요.`;
+${workbookDeliveryRules}`;
 }

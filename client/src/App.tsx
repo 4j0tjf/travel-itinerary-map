@@ -39,6 +39,7 @@ import { itineraryPrompt } from "./services/prompts";
 import Dialog from "./components/Dialog";
 import TripPlanner from "./components/TripPlanner";
 import RecommendationGuide from "./components/RecommendationGuide";
+import FollowupPrompt from "./components/FollowupPrompt";
 
 type Modal = "login" | "register" | "upload" | "rename" | "delete" | null;
 const errorMessage = (error: unknown) =>
@@ -506,6 +507,7 @@ export default function App() {
               </div>
             </div>
           </section>
+          <FollowupPrompt />
           <RecommendationGuide />
           <section className="guide-notes">
             <div>

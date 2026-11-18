@@ -3073,6 +3073,15 @@ body { line-height: 1.65; }
 .trip-card h2, .trip-card-title { overflow-wrap: anywhere; }
 
 .recommendation-guide { margin-top: 44px; padding: 32px 0; border-top: 1px solid var(--border); }
+.followup-prompt-card { margin-top: 24px; padding: 24px; background: #eef2e9; border: 1px solid #d8dfd0; border-radius: 12px; }
+.followup-prompt-heading { display: flex; align-items: start; justify-content: space-between; gap: 24px; }
+.followup-prompt-heading > div { min-width: 0; }
+.followup-prompt-heading h3 { display: flex; align-items: center; gap: 9px; margin: 0 0 12px; font-size: 19px; }
+.followup-prompt-heading p { font-size: 16px; line-height: 1.85; color: #465740; margin: 0; }
+.followup-prompt-heading .copy-button { flex-shrink: 0; white-space: nowrap; }
+.followup-prompt-card details { margin-top: 18px; }
+.followup-prompt-card summary { cursor: pointer; color: #285748; font-size: 15px; font-weight: 600; padding: 8px 0; }
+.followup-prompt-card textarea { width: 100%; min-height: 340px; resize: vertical; padding: 18px; border: 1px solid #d8dfd0; border-radius: 8px; background: #fffefa; color: #364634; font-size: 15px; line-height: 1.9; }
 .guide-section-heading h2 { font-size: 25px; line-height: 1.5; margin: 12px 0; letter-spacing: -0.6px; }
 .guide-section-heading p { max-width: 78ch; color: #53634f; font-size: 16px; line-height: 1.85; }
 .workbook-sheet-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 24px 0; }
@@ -3138,6 +3147,11 @@ body { line-height: 1.65; }
   .scoring-rubric summary { padding: 18px; }
   .scoring-rubric > p { padding-left: 18px; padding-right: 18px; }
   .scoring-table-wrap { padding-left: 18px; padding-right: 18px; }
+  .followup-prompt-card { padding: 20px; }
+  .followup-prompt-heading { flex-direction: column; gap: 18px; }
+  .followup-prompt-heading h3 { align-items: start; font-size: 18px; }
+  .followup-prompt-heading h3 svg { flex-shrink: 0; margin-top: 4px; }
+  .followup-prompt-heading .copy-button { width: 100%; justify-content: center; }
   .scoring-table-wrap table { min-width: 0; table-layout: auto; }
   .scoring-table-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .scoring-table-wrap tbody, .scoring-table-wrap tr, .scoring-table-wrap th, .scoring-table-wrap td { display: block; width: auto; }
