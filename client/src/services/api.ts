@@ -8,7 +8,7 @@ export class ApiError extends Error {
     this.details = details;
   }
 }
-async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+async function requestResponse(url: string, options: RequestInit = {}): Promise<Response> {
   const response = await fetch(import.meta.env.BASE_URL + "api" + url, {
     ...options,
     credentials: "same-origin",
@@ -32,6 +32,10 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
       body.details || [],
     );
   }
+  return response;
+}
+async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const response = await requestResponse(url, options);
   return response.status === 204 ? (undefined as T) : response.json();
 }
 export const getMe = (signal?: AbortSignal) =>
@@ -66,3 +70,26 @@ export const importGoogleSheet = (url: string, title: string) =>
     method: "POST",
     body: JSON.stringify({ url, title }),
   });
+export const replaceTripWorkbook = (id: string, file: File, revision: number) => {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("revision", String(revision));
+  return request<{ trip: Itinerary }>(`/trips/${encodeURIComponent(id)}/workbook`, { method: "PUT", body });
+};
+export const updateTripSheetLink = (id: string, url: string, revision: number) =>
+  request<{ trip: Itinerary }>(`/trips/${encodeURIComponent(id)}/source`, {
+    method: "PATCH", body: JSON.stringify({ url, revision }),
+  });
+export const refreshTripSheet = (id: string, revision: number) =>
+  request<{ trip: Itinerary }>(`/trips/${encodeURIComponent(id)}/refresh`, {
+    method: "POST", body: JSON.stringify({ revision }),
+  });
+export async function downloadTripWorkbook(id: string) {
+  const response = await requestResponse(`/trips/${encodeURIComponent(id)}/workbook`);
+  const disposition = response.headers.get("content-disposition") || "";
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  const plain = disposition.match(/filename="([^"]+)"|filename=([^;]+)/i);
+  let filename = "여행 일정.xlsx";
+  try { filename = encoded ? decodeURIComponent(encoded[1]) : plain?.[1] || plain?.[2] || filename; } catch { }
+  return { blob: await response.blob(), filename };
+}

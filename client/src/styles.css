@@ -3073,6 +3073,22 @@ body { line-height: 1.65; }
 .trip-card h2, .trip-card-title { overflow-wrap: anywhere; }
 
 .recommendation-guide { margin-top: 44px; padding: 32px 0; border-top: 1px solid var(--border); }
+.trip-source-editor p { font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
+.source-help, .source-refresh { padding: 18px; border: 1px solid var(--border); border-radius: 10px; background: #f3f6ee; }
+.source-help > strong, .source-refresh > strong { font-size: 16px; line-height: 1.8; color: #285748; }
+.source-help p, .source-refresh p { margin: 10px 0; color: #465740; }
+.source-filename { display: block; font-size: 14px; color: #53634f; overflow-wrap: anywhere; }
+.source-download { width: 100%; justify-content: center; margin-top: 14px; }
+.trip-source-editor .secondary-button { color: #285748; border-color: #b4c5ab; }
+.trip-source-editor .app-form > label { font-size: 16px; color: #365436; }
+.trip-source-editor .source-help-text { margin: 4px 0 12px; font-size: 14px; color: #53634f; }
+.source-file-input { width: 100%; max-width: 100%; padding: 12px; font-size: 16px; border: 1px solid #d8dfd0; border-radius: 8px; background: #fffefa; }
+.source-file-input::file-selector-button { min-height: 40px; margin-right: 10px; padding: 8px 10px; border: 0; border-radius: 6px; background: #e5eddf; color: #285748; font: inherit; }
+.source-refresh { margin-top: 24px; }
+.source-refresh a { display: flex; align-items: center; gap: 7px; padding: 8px 0; font-size: 15px; color: #285748; }
+.source-refresh .primary-button { margin-top: 14px; }
+.trip-source-editor .source-last-import { margin: 20px 0 0; font-size: 14px; color: #53634f; }
+.trip-source-editor .source-notice { padding: 14px; border-radius: 8px; color: #285748; background: #edf4e8; }
 .followup-prompt-card { margin-top: 24px; padding: 24px; background: #eef2e9; border: 1px solid #d8dfd0; border-radius: 12px; }
 .followup-prompt-heading { display: flex; align-items: start; justify-content: space-between; gap: 24px; }
 .followup-prompt-heading > div { min-width: 0; }

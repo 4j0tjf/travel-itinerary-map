@@ -40,6 +40,7 @@ import Dialog from "./components/Dialog";
 import TripPlanner from "./components/TripPlanner";
 import RecommendationGuide from "./components/RecommendationGuide";
 import FollowupPrompt from "./components/FollowupPrompt";
+import TripSourceEditor from "./components/TripSourceEditor";
 
 type Modal = "login" | "register" | "upload" | "rename" | "delete" | null;
 const errorMessage = (error: unknown) =>
@@ -52,6 +53,7 @@ export default function App() {
   const [sessionError, setSessionError] = useState("");
   const [sessionRetry, setSessionRetry] = useState(0);
   const [trips, setTrips] = useState<Itinerary[]>([]);
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [tripsLoading, setTripsLoading] = useState(false);
   const [tripsError, setTripsError] = useState("");
   const [tripsRetry, setTripsRetry] = useState(0);
@@ -75,6 +77,8 @@ export default function App() {
   const page = location.startsWith("trips") ? "trips" : "guide";
   const activeId = location.startsWith("trips/") ? location.slice(6) : "";
   const selectedTrip = trips.find((t) => t.id === activeId) || trips[0];
+  const editingTrip = trips.find(trip => trip.id === editingTripId);
+  useEffect(() => { if (!user) setEditingTripId(null); }, [user]);
   const navigate = (target: string) => {
     window.location.hash = target;
     setLocation(target);
@@ -531,7 +535,8 @@ export default function App() {
               <h3>다음에도 이어지는 여행</h3>
               <p>
                 여행은 서버 PC에 계정별로 저장해요. 로그인은 30일간 유지되고
-                언제든 로그아웃할 수 있어요.
+                언제든 로그아웃할 수 있어요. 여행 안의 ‘일정 수정’에서 Excel
+                수정본을 올리거나 등록한 구글 시트를 최신화할 수 있습니다.
               </p>
             </div>
           </section>
@@ -659,8 +664,9 @@ export default function App() {
                   aria-labelledby={`trip-tab-${selectedTrip.id}`}
                 >
                   <TripPlanner
-                    key={selectedTrip.id}
+                    key={`${selectedTrip.id}:${selectedTrip.source?.importedAt || selectedTrip.createdAt}`}
                     trip={selectedTrip}
+                    onEdit={() => setEditingTripId(selectedTrip.id)}
                     onRename={() => {
                       setTitle(selectedTrip.title);
                       open("rename");
@@ -673,6 +679,10 @@ export default function App() {
           )}
         </>
       )}
+      {editingTrip && user && <TripSourceEditor trip={editingTrip} onClose={() => setEditingTripId(null)} onUpdated={(trip, message) => {
+        setTrips(previous => previous.map(existing => existing.id === trip.id ? trip : existing));
+        setToast(message);
+      }} />}
       {toast && (
         <div className="toast" role="status">
           <Check size={16} />

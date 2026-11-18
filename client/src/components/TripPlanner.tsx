@@ -11,6 +11,7 @@ import {
   Mountain,
   Navigation,
   Pencil,
+  FilePenLine,
   Route,
   Settings2,
   Trash2,
@@ -31,10 +32,12 @@ export default function TripPlanner({
   trip,
   onRename,
   onDelete,
+  onEdit,
 }: {
   trip: Itinerary;
   onRename: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }) {
   const [dayIndex, setDayIndex] = useState(0);
   const [selectedId, setSelectedId] = useState(
@@ -92,6 +95,10 @@ export default function TripPlanner({
           </div>
         </div>
         <div className="trip-heading-right">
+          <button className="text-action" onClick={onEdit}>
+            <FilePenLine size={14} />
+            <span>일정 수정</span>
+          </button>
           <button className="text-action" onClick={onRename}>
             <Pencil size={14} />
             <span>이름 변경</span>

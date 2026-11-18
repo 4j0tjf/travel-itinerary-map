@@ -234,6 +234,84 @@ describe("guide and private travel collection", () => {
     expect(calls.some((c) => c.options?.method === "DELETE")).toBe(true);
   });
 
+  it("replaces the selected journey from Excel without creating a second tab and resets a removed day", async () => {
+    const original: Itinerary = { ...itinerary, revision: 0, workbookAvailable: true,
+      source: { kind: "excel", filename: "original.xlsx", importedAt: "2026-11-17T01:00:00Z" } };
+    const updated: Itinerary = { ...original, revision: 1, days: [{ ...itinerary.days[0],
+      places: [{ ...itinerary.days[0].places[0], name: "수정된 장소" }] }],
+      source: { kind: "excel", filename: "edited.xlsx", importedAt: "2026-11-18T01:00:00Z" } };
+    const uploads: FormData[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/api/auth/me") return response({ user });
+      if (url === "/api/trips") return response({ trips: [original] });
+      if (url === "/api/trips/shizuoka-test/workbook" && options?.method === "PUT") {
+        uploads.push(options.body as FormData);
+        return uploads.length === 1 ? response({ error: "날짜를 확인해 주세요.", details: ["2행 날짜 오류"] }, 400) : response({ trip: updated });
+      }
+      throw new Error("Unexpected API request " + url);
+    }));
+    window.location.hash = "trips/shizuoka-test";
+    render(<App />);
+    await screen.findByRole("tab", { name: /시즈오카/, selected: true });
+    fireEvent.click(screen.getByRole("tab", { name: /DAY 02/ }));
+    fireEvent.click(screen.getByRole("button", { name: "일정 수정" }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "원본 Excel 내려받기" })).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText("수정한 Excel 파일"), { target: { files: [new File(["edited"], "edited.xlsx")] } });
+    fireEvent.submit(dialog.querySelector("form")!);
+    await within(dialog).findByRole("alert");
+    expect(screen.getByRole("tab", { name: /DAY 02/, selected: true })).toBeTruthy();
+    fireEvent.submit(dialog.querySelector("form")!);
+    await screen.findByRole("button", { name: "1. 수정된 장소" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByRole("tab", { name: /DAY 02/ })).toBeNull();
+    expect(within(screen.getByRole("tablist", { name: "등록된 여행" })).getAllByRole("tab")).toHaveLength(1);
+    expect(uploads.map(body => body.get("revision"))).toEqual(["0", "0"]);
+  });
+
+  it("registers or edits a sheet link separately and refreshes only the selected journey", async () => {
+    const original: Itinerary = { ...itinerary, revision: 0, workbookAvailable: false };
+    const url = "https://docs.google.com/spreadsheets/d/1XWJLkAwch5GXAt_7zOFDcg8Wm8Xv29_8PWuuW15qmAE/edit";
+    const linked: Itinerary = { ...original, revision: 1, source: { kind: "excel", importedAt: original.createdAt, googleSheetUrl: url } };
+    const updated: Itinerary = { ...linked, revision: 2, workbookAvailable: true,
+      days: [{ ...itinerary.days[0], places: [{ ...itinerary.days[0].places[0], name: "현재 시트의 장소" }] }],
+      source: { ...linked.source!, kind: "google-sheet", importedAt: "2026-11-18T02:00:00Z" } };
+    const refreshes: { revision: number }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (address: string, options?: RequestInit) => {
+      if (address === "/api/auth/me") return response({ user });
+      if (address === "/api/trips") return response({ trips: [original] });
+      if (address === "/api/trips/shizuoka-test/source") {
+        expect(JSON.parse(options?.body as string)).toEqual({ url, revision: 0 });
+        return response({ trip: linked });
+      }
+      if (address === "/api/trips/shizuoka-test/refresh") {
+        refreshes.push(JSON.parse(options?.body as string));
+        return refreshes.length === 1 ? response({ error: "공유 설정을 확인해 주세요." }, 400) : response({ trip: updated });
+      }
+      throw new Error("Unexpected API request " + address);
+    }));
+    window.location.hash = "trips/shizuoka-test";
+    render(<App />);
+    await screen.findByRole("tab", { name: /시즈오카/, selected: true });
+    fireEvent.click(screen.getByRole("button", { name: "일정 수정" }));
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "현재 일정 Excel 내려받기" })).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("tab", { name: "구글 시트" }));
+    expect((within(dialog).getByRole("button", { name: "등록된 시트로 최신화" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(within(dialog).getByLabelText("등록할 구글 시트 링크"), { target: { value: url } });
+    fireEvent.submit(dialog.querySelector("form")!);
+    await within(dialog).findByText(/링크를 저장했어요/);
+    expect(screen.getByRole("tab", { name: /DAY 02/ })).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "등록된 시트로 최신화" }));
+    await within(dialog).findByRole("alert");
+    expect(screen.getByRole("tab", { name: /DAY 02/ })).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "등록된 시트로 최신화" }));
+    await screen.findByRole("button", { name: "1. 현재 시트의 장소" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(within(screen.getByRole("tablist", { name: "등록된 여행" })).getAllByRole("tab")).toHaveLength(1);
+    expect(refreshes).toEqual([{ revision: 1 }, { revision: 1 }]);
+  });
+
   it("imports a Google sheet link and preserves it when sharing access fails", async () => {
     const imports: { url: string; title: string }[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, options?: RequestInit) => {

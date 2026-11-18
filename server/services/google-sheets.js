@@ -29,6 +29,13 @@ function allowedDownload(url) {
     (url.hostname === "docs.google.com" || /^[a-z0-9-]+-sheets\.googleusercontent\.com$/.test(url.hostname));
 }
 
+export function normalizeGoogleSheetLink(input) {
+  const url = exportUrl(input);
+  url.pathname = url.pathname.replace(/\/export$/, "/edit");
+  url.searchParams.delete("format");
+  return url.href;
+}
+
 function filename(header = "") {
   let name = "구글 스프레드시트.xlsx";
   const encoded = header.match(/filename\*=UTF-8''([^;]+)/i);

@@ -7,7 +7,8 @@ import { createStore, root } from "./services/store.js";
 import { createAuth } from "./services/auth.js";
 import { parseExcel } from "./services/excel.js";
 import { HttpError } from "./utils/errors.js";
-import { fetchGoogleSheet } from "./services/google-sheets.js";
+import { fetchGoogleSheet, normalizeGoogleSheetLink } from "./services/google-sheets.js";
+import { createWorkbookStorage, exportCurrentItinerary, workbookFilename } from "./services/workbooks.js";
 
 export function createApp({
   dataDir = path.join(root, "data"),
@@ -18,6 +19,7 @@ export function createApp({
 } = {}) {
   const app = express();
   const store = createStore(dataDir);
+  const workbooks = createWorkbookStorage(dataDir);
   const auth = createAuth(store);
   app.disable("x-powered-by");
   app.set("trust proxy", "loopback");
@@ -65,7 +67,7 @@ export function createApp({
     res.json({
       trips: db.trips
         .filter((t) => t.ownerId === req.user.id)
-        .map(({ ownerId, ...trip }) => trip),
+        .map(publicTrip),
     });
   });
   const upload = multer({
@@ -79,34 +81,44 @@ export function createApp({
         /\.xlsx$/i.test(file.originalname),
       ),
   });
-  async function saveTrip(parsed, ownerId) {
+  function publicTrip({ ownerId, workbook, ...trip }) {
+    return { ...trip, revision: trip.revision ?? 0, workbookAvailable: Boolean(workbook) };
+  }
+  function uploadFilename(file) {
+    const decoded = Buffer.from(file.originalname, "latin1").toString("utf8");
+    return workbookFilename(decoded.includes("\uFFFD") ? file.originalname : decoded);
+  }
+  async function saveTrip(parsed, ownerId, file) {
     const now = new Date().toISOString();
+    const workbook = await workbooks.put(file.buffer, file.filename);
     const trip = {
       ...parsed.itinerary,
       warnings: parsed.warnings,
       sourceSheet: parsed.sheetName,
       createdAt: now,
       updatedAt: now,
+      revision: 0,
+      workbook,
+      source: { kind: file.googleSheetUrl ? "google-sheet" : "excel", filename: workbook.filename, importedAt: now,
+        ...(file.googleSheetUrl ? { googleSheetUrl: file.googleSheetUrl } : {}) },
     };
-    await store.update((db) => {
+    try { await store.update((db) => {
       if (db.trips.filter((t) => t.ownerId === ownerId).length >= 100)
         throw new HttpError(
           400,
           "여행은 계정당 최대 100개까지 저장할 수 있습니다.",
         );
       db.trips.push({ ...trip, ownerId });
-    });
-    return trip;
+    }); } catch (error) { await workbooks.remove(workbook); throw error; }
+    return publicTrip(trip);
   }
   app.post("/api/trips", upload.single("file"), async (req, res) => {
     if (!req.file) throw new HttpError(400, "업로드할 .xlsx 파일을 선택해 주세요.");
-    let filename = req.file.originalname;
-    const decoded = Buffer.from(filename, "latin1").toString("utf8");
-    if (!decoded.includes("\uFFFD")) filename = decoded;
+    const filename = uploadFilename(req.file);
     const parsed = await parseExcel(req.file.buffer, {
       filename, title: req.body?.title, sheetName: req.body?.sheetName,
     });
-    const trip = await saveTrip(parsed, req.user.id);
+    const trip = await saveTrip(parsed, req.user.id, { buffer: req.file.buffer, filename });
     res.status(201).json({ trip });
   });
   const importLimiter = rateLimit({
@@ -124,9 +136,10 @@ export function createApp({
     if (db.trips.filter((t) => t.ownerId === req.user.id).length >= 100) {
       throw new HttpError(400, "여행은 계정당 최대 100개까지 저장할 수 있습니다.");
     }
-    const { buffer, filename } = await googleSheetFetcher(url);
+    const googleSheetUrl = normalizeGoogleSheetLink(url);
+    const { buffer, filename } = await googleSheetFetcher(googleSheetUrl);
     const parsed = await parseExcel(buffer, { filename, title });
-    const trip = await saveTrip(parsed, req.user.id);
+    const trip = await saveTrip(parsed, req.user.id, { buffer, filename, googleSheetUrl });
     res.status(201).json({ trip });
   });
   const owned = (db, req) => {
@@ -137,7 +150,80 @@ export function createApp({
     return trip;
   };
   app.get("/api/trips/:id", async (req, res) => {
-    const { ownerId, ...trip } = owned(await store.read(), req);
+    res.json({ trip: publicTrip(owned(await store.read(), req)) });
+  });
+  function checkRevision(trip, revision) {
+    if (!["number", "string"].includes(typeof revision) || revision === "" || !Number.isSafeInteger(Number(revision)) || Number(revision) < 0) throw new HttpError(400, "일정 버전이 올바르지 않습니다. 페이지를 새로고침해 주세요.");
+    if (Number(revision) !== (trip.revision ?? 0)) throw new HttpError(409, "다른 요청에서 일정이 변경되었습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.");
+  }
+  async function loadOwned(req, _res, next) {
+    req.tripSnapshot = owned(await store.read(), req);
+    next();
+  }
+  async function replaceTrip(req, file, kind) {
+    const snapshot = req.tripSnapshot;
+    checkRevision(snapshot, req.body?.revision);
+    const parsed = await parseExcel(file.buffer, { filename: file.filename, title: snapshot.title });
+    const workbook = await workbooks.put(file.buffer, file.filename);
+    let previous;
+    let result;
+    try {
+      result = await store.update(db => {
+        const stored = owned(db, req);
+        checkRevision(stored, snapshot.revision ?? 0);
+        previous = stored.workbook;
+        const now = new Date().toISOString();
+        const source = { ...stored.source, kind, filename: workbook.filename, importedAt: now };
+        Object.assign(stored, parsed.itinerary, { id: snapshot.id, title: stored.title, createdAt: stored.createdAt,
+          warnings: parsed.warnings, sourceSheet: parsed.sheetName, updatedAt: now, revision: (stored.revision ?? 0) + 1,
+          workbook, source });
+        return publicTrip(stored);
+      });
+    } catch (error) { await workbooks.remove(workbook); throw error; }
+    await workbooks.remove(previous);
+    return result;
+  }
+  app.get("/api/trips/:id/workbook", loadOwned, async (req, res) => {
+    let trip = req.tripSnapshot;
+    let buffer;
+    if (trip.workbook) {
+      try { buffer = await workbooks.read(trip.workbook); }
+      catch (error) {
+        if (error.code !== "ENOENT") throw error;
+        // A concurrent replacement may have retired the file after our first read.
+        trip = owned(await store.read(), req);
+        if (trip.workbook) buffer = await workbooks.read(trip.workbook);
+      }
+    }
+    if (!buffer) buffer = await exportCurrentItinerary(trip);
+    res.set("X-Workbook-Source", trip.workbook ? "original" : "generated");
+    res.attachment(trip.workbook?.filename || workbookFilename(trip.title));
+    res.type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").send(buffer);
+  });
+  app.put("/api/trips/:id/workbook", loadOwned, upload.single("file"), async (req, res) => {
+    if (!req.file) throw new HttpError(400, "수정한 .xlsx 파일을 선택해 주세요.");
+    const trip = await replaceTrip(req, { buffer: req.file.buffer, filename: uploadFilename(req.file) }, "excel");
+    res.json({ trip });
+  });
+  app.patch("/api/trips/:id/source", loadOwned, async (req, res) => {
+    const googleSheetUrl = normalizeGoogleSheetLink(req.body?.url);
+    checkRevision(req.tripSnapshot, req.body?.revision);
+    const trip = await store.update(db => {
+      const stored = owned(db, req);
+      checkRevision(stored, req.tripSnapshot.revision ?? 0);
+      stored.source = { kind: "excel", importedAt: stored.createdAt, ...stored.source, googleSheetUrl, linkUpdatedAt: new Date().toISOString() };
+      stored.updatedAt = new Date().toISOString();
+      stored.revision = (stored.revision ?? 0) + 1;
+      return publicTrip(stored);
+    });
+    res.json({ trip });
+  });
+  app.post("/api/trips/:id/refresh", loadOwned, importLimiter, async (req, res) => {
+    checkRevision(req.tripSnapshot, req.body?.revision);
+    const url = req.tripSnapshot.source?.googleSheetUrl;
+    if (!url) throw new HttpError(400, "먼저 이 여행의 구글 시트 링크를 등록해 주세요.");
+    const file = await googleSheetFetcher(url);
+    const trip = await replaceTrip(req, file, "google-sheet");
     res.json({ trip });
   });
   app.patch("/api/trips/:id", async (req, res) => {
@@ -148,16 +234,18 @@ export function createApp({
       const stored = owned(db, req);
       stored.title = title.trim();
       stored.updatedAt = new Date().toISOString();
-      const { ownerId, ...result } = stored;
-      return result;
+      stored.revision = (stored.revision ?? 0) + 1;
+      return publicTrip(stored);
     });
     res.json({ trip });
   });
   app.delete("/api/trips/:id", async (req, res) => {
-    await store.update((db) => {
+    const reference = await store.update((db) => {
       const trip = owned(db, req);
       db.trips.splice(db.trips.indexOf(trip), 1);
+      return trip.workbook;
     });
+    await workbooks.remove(reference);
     res.status(204).end();
   });
   app.use("/api", (_req, res) =>

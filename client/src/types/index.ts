@@ -42,6 +42,15 @@ export interface Itinerary {
   sourceSheet: string;
   createdAt: string;
   updatedAt: string;
+  revision?: number;
+  workbookAvailable?: boolean;
+  source?: {
+    kind: "excel" | "google-sheet";
+    filename?: string;
+    importedAt?: string;
+    googleSheetUrl?: string;
+    linkUpdatedAt?: string;
+  };
 }
 export function mapsUrl(place: Place) {
   const query = hasCoordinates(place)
