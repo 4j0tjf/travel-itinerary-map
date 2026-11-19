@@ -22,7 +22,7 @@ import { hasCoordinates, mapsUrl } from "../types";
 import TravelMap from "./TravelMap";
 import Dialog from "./Dialog";
 import MapKeySettings from "./MapKeySettings";
-import { useRoadRoutes } from "../services/road-routes";
+import { ROUTE_STYLES, useRoadRoutes } from "../services/road-routes";
 import { useMobileLayout } from "../services/use-mobile-layout";
 import { useAdaptiveTabs } from "../services/use-adaptive-tabs";
 import { rememberDaySelection, restoreDaySelection } from "../services/day-selection";
@@ -215,10 +215,11 @@ export default function TripPlanner({
           />
           <div className="road-route-status" role="status">
             <span>{routes.loading ? "전체 날짜의 길찾기 경로를 준비하고 있어요…" : routes.error ||
-              (dayRoutes.length ? "자동차는 파랑, 도보는 갈색 경로입니다. 실시간 교통은 반영하지 않습니다." : "이 날짜에는 표시 가능한 자동차·도보 경로가 없습니다.")}</span>
+              (dayRoutes.length ? "자동차는 파랑, 도보는 갈색, 대중교통은 보라색 경로입니다. 실시간 교통은 반영하지 않습니다." : "이 날짜에는 표시 가능한 자동차·도보·대중교통 경로가 없습니다.")}</span>
             {routes.saveFailed && <span>경로를 저장하지 못했습니다. 다음 접속 시 다시 조회될 수 있습니다.</span>}
             {!routes.loading && (routes.error || routes.saveFailed) && <button className="text-action" onClick={routes.retry}>경로 다시 조회</button>}
             {day.places.some(p => p.mode === "WALK") && <span>도보 경로에 보도나 보행자 통로가 없을 수 있습니다. 현장 표지와 안전한 통행로를 확인하세요.</span>}
+            {day.places.some(p => p.mode === "TRANSIT") && <span>대중교통 경로는 조회한 시각의 노선 기준이라 실제 시간표·환승과 다를 수 있습니다.</span>}
             {routes.warnings.length > 0 && <div aria-label="길찾기 안내">{[...new Set(routes.warnings)].map(warning => <p key={warning}>{warning}</p>)}</div>}
           </div>
           <div className="journey-note">
@@ -396,11 +397,7 @@ export default function TripPlanner({
                       <div className="travel-leg">
                         <Navigation size={11} />
                         <span>
-                          {p.mode === "WALK"
-                            ? "도보 이동"
-                            : p.mode === "DRIVE"
-                              ? "자동차 이동"
-                              : "기타 이동수단"}
+                          {p.mode === "OTHER" ? "기타 이동수단" : `${ROUTE_STYLES[p.mode].label} 이동`}
                         </span>
                         <span className="leg-dot">·</span>
                         <span>{routes.loading ? "경로 조회 중" : p.mode === "OTHER" ? "경로 미지원" : "지도 경로 참고"}</span>

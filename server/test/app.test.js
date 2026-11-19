@@ -392,7 +392,7 @@ test("validation rejects bad Excel without saving partial trips; missing coordin
           "",
           "",
           "좌표 모름",
-          "전철",
+          "페리",
         ],
       ]),
     );

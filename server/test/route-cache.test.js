@@ -18,6 +18,12 @@ test("route jobs preserve order, split travel modes and missing stops, and cap a
   assert.equal(routeJobs({ days: [{ date: "two", places: [p(0), p(1), p(2)] }] })[0].key, jobs[0].key);
 });
 
+test("public transit is looked up one leg at a time", () => {
+  const jobs = routeJobs({ days: [{ date: "one", places: [p(0, "TRANSIT"), p(1, "TRANSIT"), p(2, "TRANSIT"), p(3, "WALK"), p(4)] }] });
+  assert.deepEqual(jobs.map(j => [j.mode, j.stops.length]), [["TRANSIT", 2], ["TRANSIT", 2], ["TRANSIT", 2], ["WALK", 2]]);
+  assert.deepEqual(jobs[1].stops[0], jobs[0].stops[1]);
+});
+
 test("only geometry is cached, expires at 30 days, and changed jobs/owners cannot reuse it", async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), "travel-route-cache-"));
   let now = 1000;

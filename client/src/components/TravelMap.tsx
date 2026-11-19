@@ -22,7 +22,7 @@ import {
   watchMapErrors,
   type MapsFailure,
 } from "../services/google-maps";
-import type { RoadPath } from "../services/road-routes";
+import { ROUTE_STYLES, type RoadPath } from "../services/road-routes";
 import { useMapsKey } from "../services/maps-key";
 import {
   LABEL_FONT,
@@ -252,7 +252,7 @@ export default function TravelMap({
         map: map.current,
         path: route.path,
         clickable: false,
-        strokeColor: route.mode === "WALK" ? "#8b5c27" : "#2468c5",
+        strokeColor: ROUTE_STYLES[route.mode].color,
         strokeOpacity: 0.9,
         strokeWeight: 5,
       }),
@@ -684,7 +684,7 @@ export default function TravelMap({
           {error ||
             (!apiKey
               ? "실제 지도·도로 경로가 아닌 상대 위치입니다"
-              : "© Google Maps · 자동차 파랑 / 도보 갈색")}
+              : `© Google Maps · ${Object.values(ROUTE_STYLES).map((s) => `${s.label} ${s.colorName}`).join(" / ")}`)}
         </span>
       </div>
     </div>

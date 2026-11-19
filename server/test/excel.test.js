@@ -86,3 +86,14 @@ test("native Google Maps hyperlinks preserve place text, both times and AI/buffe
   assert.match(place.memo, /^\[AI 추천\]/);
   assert.match(place.memo, /앞 여유 10분/);
 });
+
+test("public transit words become TRANSIT, taxis drive, and unknown modes warn", async () => {
+  const book = new ExcelJS.Workbook();
+  const sheet = book.addWorksheet("여행 일정");
+  sheet.addRow(["날짜", "시간", "장소명", "주소", "위도", "경도", "메모", "이동수단"]);
+  const modes = ["대중교통", "지하철", "Bus", "택시", "페리"];
+  modes.forEach((mode, i) => sheet.addRow(["2026-12-01", `1${i}:00`, `장소${i}`, "Shizuoka", 35 + i / 100, 138, "", mode]));
+  const result = await parseExcel(await book.xlsx.writeBuffer());
+  assert.deepEqual(result.itinerary.days[0].places.map((p) => p.mode), ["TRANSIT", "TRANSIT", "TRANSIT", "DRIVE", "OTHER"]);
+  assert.equal(result.warnings.filter((w) => w.includes("자동차·도보·대중교통 이외")).length, 1);
+});

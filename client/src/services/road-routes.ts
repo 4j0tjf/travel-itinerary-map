@@ -5,7 +5,15 @@ import { KEY_CHANGED_MESSAGE, loadMaps, mapsKeyNeedsReload } from "./google-maps
 import { useMapsKey } from "./maps-key";
 
 export type RoadPoint = { lat: number; lng: number };
-export type RoadPath = { key: string; date: string; mode: "DRIVE" | "WALK"; path: RoadPoint[] };
+export type RouteMode = "DRIVE" | "WALK" | "TRANSIT";
+export type RoadPath = { key: string; date: string; mode: RouteMode; path: RoadPoint[] };
+// 지도 선 색과 안내 문구가 같은 값을 쓴다.
+export const ROUTE_STYLES: Record<RouteMode, { color: string; label: string; colorName: string }> = {
+  DRIVE: { color: "#2468c5", label: "자동차", colorName: "파랑" },
+  WALK: { color: "#8b5c27", label: "도보", colorName: "갈색" },
+  TRANSIT: { color: "#7b45b0", label: "대중교통", colorName: "보라" },
+};
+const TRAVEL_MODES: Record<RouteMode, string> = { DRIVE: "DRIVING", WALK: "WALKING", TRANSIT: "TRANSIT" };
 export type RouteJob = Omit<RoadPath, "path"> & { stops: RoadPoint[] };
 type Geometry = { path: RoadPoint[]; expiresAt: number };
 type RouteResult = { paths: RoadPath[]; failed: number; warnings: string[]; saveFailed: boolean; quota?: boolean };
@@ -35,7 +43,8 @@ export function loadRoadRoutes(trip: Itinerary, apiKey: string): Promise<RouteRe
         const options = {
           origin: job.stops[0], destination: job.stops.at(-1),
           intermediates: job.stops.slice(1, -1).map(location => ({ location })),
-          travelMode: job.mode === "WALK" ? "WALKING" : "DRIVING",
+          // 대중교통은 출발 시각을 주지 않으면 지금 시각 기준 노선으로 조회된다.
+          travelMode: TRAVEL_MODES[job.mode],
           ...(job.mode === "DRIVE" ? { routingPreference: "TRAFFIC_UNAWARE" } : {}),
           optimizeWaypointOrder: false, fields: ["path", "warnings"],
         };

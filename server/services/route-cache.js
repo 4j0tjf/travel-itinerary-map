@@ -11,8 +11,10 @@ export function routeJobs(trip) {
     let job;
     for (let i = 0; i < day.places.length - 1; i++) {
       const from = day.places[i], to = day.places[i + 1];
-      if (!validPoint(from) || !validPoint(to) || !["DRIVE", "WALK"].includes(from.mode)) { job = undefined; continue; }
-      if (!job || job.mode !== from.mode || job.stops.length === 12) {
+      if (!validPoint(from) || !validPoint(to) || !["DRIVE", "WALK", "TRANSIT"].includes(from.mode)) { job = undefined; continue; }
+      // 대중교통은 경유지를 지원하지 않아 구간마다 따로 조회한다.
+      const limit = from.mode === "TRANSIT" ? 2 : 12;
+      if (!job || job.mode !== from.mode || job.stops.length === limit) {
         job = { date: day.date, mode: from.mode, stops: [{ lat: from.lat, lng: from.lng }] };
         jobs.push(job);
       }

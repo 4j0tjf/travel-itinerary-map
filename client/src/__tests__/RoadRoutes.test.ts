@@ -56,3 +56,17 @@ it("flags route failures caused by an exhausted quota", async () => {
   expect(isQuotaError(new Error("No route"))).toBe(false);
   expect(isQuotaError({ code: 429 })).toBe(true);
 });
+
+it("looks up public transit legs without intermediates or a routing preference", async () => {
+  const computeRoutes = vi.fn().mockResolvedValue({ routes: [{ path, warnings: [] }] });
+  vi.stubGlobal("google", { maps: { importLibrary: vi.fn().mockResolvedValue({ Route: { computeRoutes } }) } });
+  vi.stubGlobal("fetch", vi.fn(async (_url: string, options?: RequestInit) => options?.method === "POST" ? json({ entry: {} }) : json({
+    jobs: [{ key: "transit", mode: "TRANSIT", date: "2026-12-01", stops: [path[0], path[2]] }], cached: {},
+  })));
+  const { loadRoadRoutes } = await import("../services/road-routes");
+  const result = await loadRoadRoutes(trip, "test-key");
+  expect(result.paths.map((p) => p.mode)).toEqual(["TRANSIT"]);
+  const options = computeRoutes.mock.calls[0][0];
+  expect(options).toMatchObject({ travelMode: "TRANSIT", intermediates: [] });
+  expect(options).not.toHaveProperty("routingPreference");
+});

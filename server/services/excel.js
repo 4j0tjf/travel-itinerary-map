@@ -179,14 +179,16 @@ export async function parseExcel(
       );
     const modeRaw = text(fields.mode).toUpperCase();
     const mode =
-      ["DRIVE", "자동차", "차량", "렌터카", "CAR"].includes(modeRaw) || !modeRaw
+      ["DRIVE", "자동차", "차량", "렌터카", "택시", "CAR", "TAXI"].includes(modeRaw) || !modeRaw
         ? "DRIVE"
         : ["WALK", "도보", "WALKING"].includes(modeRaw)
           ? "WALK"
-          : "OTHER";
+          : ["TRANSIT", "대중교통", "버스", "지하철", "전철", "기차", "열차", "BUS", "SUBWAY", "TRAIN", "RAIL"].includes(modeRaw)
+            ? "TRANSIT"
+            : "OTHER";
     if (mode === "OTHER")
       warnings.push(
-        `${i}행 ${name}: 자동차·도보 이외의 이동수단은 경로 계산을 지원하지 않습니다.`,
+        `${i}행 ${name}: 자동차·도보·대중교통 이외의 이동수단은 경로 계산을 지원하지 않습니다.`,
       );
     rows.push({
       date: parsedDate,

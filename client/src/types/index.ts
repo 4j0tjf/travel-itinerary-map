@@ -16,7 +16,7 @@ export interface Place {
   lng: number | null;
   memo: string;
   image: string;
-  mode: "DRIVE" | "WALK" | "OTHER";
+  mode: "DRIVE" | "WALK" | "TRANSIT" | "OTHER";
 }
 export type LocatedPlace = Place & { lat: number; lng: number };
 export function hasCoordinates(p: Place): p is LocatedPlace {
