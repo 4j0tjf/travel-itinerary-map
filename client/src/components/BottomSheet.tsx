@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { MouseEvent, PointerEvent } from "react";
 
-// 휴대폰 일정 패널 높이: 한 줄(mini) → 지금 일정 카드(peek) → 절반(half) → 전체(full).
-export type SheetState = "mini" | "peek" | "half" | "full";
-const ORDER: SheetState[] = ["mini", "peek", "half", "full"];
-const MIN_HEIGHT = 56;
+// 휴대폰 일정 패널 높이: 손잡이만(hidden) → 한 줄(mini) → 지금 일정 카드(peek) → 절반(half) → 전체(full).
+// 패널이 낮아질수록 지도가 그만큼 커진다(지도와 패널은 위아래로 나뉜다).
+export type SheetState = "hidden" | "mini" | "peek" | "half" | "full";
+const ORDER: SheetState[] = ["hidden", "mini", "peek", "half", "full"];
+// 처음 재기 전에 쓰는 높이(px). 실제 높이는 그 상태가 될 때마다 잰다.
+const DEFAULT_HEIGHT = { mini: 76, peek: 210 };
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 type Drag = { startY: number; startHeight: number; lastY: number; lastTime: number; speed: number; moved: boolean };
@@ -18,6 +20,19 @@ export function useSheetDrag(state: SheetState, onState: (state: SheetState) => 
   const suppressClick = useRef(false);
   const current = useRef({ state, onState });
   current.current = { state, onState };
+  const measured = useRef<Partial<Record<SheetState, number>>>({});
+  // 지금 높이를 기억해 두면, 손을 뗐을 때 가장 가까운 높이로 붙일 수 있다.
+  useLayoutEffect(() => {
+    const height = sheetRef.current?.getBoundingClientRect().height;
+    if (height) measured.current[state] = height;
+  }, [state]);
+  const limits = (sheet: HTMLElement) => {
+    const layout = sheet.parentElement;
+    const toolbar = layout?.querySelector<HTMLElement>(".planner-toolbar");
+    const grip = sheet.querySelector<HTMLElement>(".sheet-grip");
+    const min = grip ? grip.offsetHeight + parseFloat(getComputedStyle(sheet).paddingBottom || "0") : 0;
+    return { min, max: Math.max(min, (layout?.clientHeight ?? 0) - (toolbar?.offsetHeight ?? 0)), layout: layout?.clientHeight ?? 0 };
+  };
 
   const begin = (y: number) => {
     const sheet = sheetRef.current;
@@ -36,13 +51,12 @@ export function useSheetDrag(state: SheetState, onState: (state: SheetState) => 
       sheet.parentElement?.setAttribute("data-dragging", "");
     }
     const now = performance.now();
-    d.speed = (y - d.lastY) / Math.max(1, now - d.lastTime);
+    // 터치 이벤트가 몰려 들어오면 속도가 튀므로 간격을 최소 8ms로 본다.
+    d.speed = (y - d.lastY) / Math.max(8, now - d.lastTime);
     d.lastY = y;
     d.lastTime = now;
-    const layout = sheet.parentElement;
-    const toolbar = layout?.querySelector<HTMLElement>(".planner-toolbar");
-    const max = Math.max(MIN_HEIGHT, (layout?.clientHeight ?? 0) - (toolbar?.offsetHeight ?? 0));
-    sheet.style.flex = `0 0 ${clamp(d.startHeight - dy, MIN_HEIGHT, max)}px`;
+    const { min, max } = limits(sheet);
+    sheet.style.flex = `0 0 ${clamp(d.startHeight - dy, min, max)}px`;
     return true;
   };
   const finish = (y: number | null, fromHead: boolean) => {
@@ -59,11 +73,29 @@ export function useSheetDrag(state: SheetState, onState: (state: SheetState) => 
     }
     if (y === null) return;
     const dy = y - d.startY;
-    const distance = Math.abs(dy);
-    const fast = Math.abs(d.speed) > 0.5;
-    const steps = distance < 60 ? (fast ? 1 : 0) : distance < 260 ? 1 : distance < 480 ? 2 : 3;
     const { state: from, onState: set } = current.current;
-    set(ORDER[clamp(ORDER.indexOf(from) + (dy < 0 ? steps : -steps), 0, ORDER.length - 1)]);
+    const { min, max, layout } = limits(sheet);
+    if (!layout) {
+      // 크기를 잴 수 없을 때(테스트 환경 등)는 끈 거리만큼 단계를 옮긴다.
+      const steps = Math.abs(dy) < 60 ? 0 : Math.abs(dy) < 260 ? 1 : Math.abs(dy) < 480 ? 2 : 3;
+      set(ORDER[clamp(ORDER.indexOf(from) + (dy < 0 ? steps : -steps), 0, ORDER.length - 1)]);
+      return;
+    }
+    // 손을 뗀 높이에서 가장 가까운 단계에 붙인다. 빠르게 튕겼으면 그 방향으로 한 단계 더 간다.
+    const released = clamp(d.startHeight - dy, min, max);
+    const heights: Record<SheetState, number> = {
+      hidden: min,
+      mini: measured.current.mini ?? DEFAULT_HEIGHT.mini,
+      peek: measured.current.peek ?? DEFAULT_HEIGHT.peek,
+      half: layout * 0.56,
+      full: max,
+    };
+    const nearest = ORDER.reduce((best, s) => (Math.abs(heights[s] - released) < Math.abs(heights[best] - released) ? s : best), from);
+    const flick = Math.abs(d.speed) > 0.45 ? (d.speed < 0 ? 1 : -1) : 0;
+    const flicked = ORDER[clamp(ORDER.indexOf(nearest) + flick, 0, ORDER.length - 1)];
+    // 튕긴 방향이 손을 뗀 위치보다 뒤로 가지 않게 한다(위로 튕겼는데 더 낮아지는 일 방지).
+    const target = flick && Math.sign(heights[flicked] - released) === flick ? flicked : nearest;
+    set(target);
   };
 
   useEffect(() => {
@@ -127,6 +159,7 @@ export function useSheetDrag(state: SheetState, onState: (state: SheetState) => 
 }
 
 const GRIP: Record<SheetState, { label: string; next: SheetState }> = {
+  hidden: { label: "일정 카드 보이기", next: "peek" },
   mini: { label: "지금 일정 카드 펼치기", next: "peek" },
   peek: { label: "일정 목록 펼치기", next: "half" },
   half: { label: "일정 목록 접기", next: "peek" },

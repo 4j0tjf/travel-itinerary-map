@@ -127,6 +127,13 @@ it("moves the phone itinerary sheet by tapping the grip, dragging the card and p
   fireEvent.click(head.querySelector(".next-stop")!);
   expect(layout.getAttribute("data-sheet")).toBe("peek");
 
+  // 끝까지 내리면 손잡이만 남고, 손잡이를 누르면 카드가 돌아온다.
+  dragHead(300, 600);
+  await afterDrag();
+  expect(layout.getAttribute("data-sheet")).toBe("hidden");
+  fireEvent.click(screen.getByRole("button", { name: "일정 카드 보이기" }));
+  expect(layout.getAttribute("data-sheet")).toBe("peek");
+
   fireEvent.click(screen.getByRole("button", { name: "일정 자세히" }));
   expect(layout.getAttribute("data-sheet")).toBe("half");
   fireEvent.click(head.querySelector(".next-stop")!); // 펼친 상태의 한 줄 카드를 누르면 카드로 돌아간다.

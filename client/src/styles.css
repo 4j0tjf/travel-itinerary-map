@@ -3775,7 +3775,11 @@ button.map-location:hover, button.map-location:focus-visible { background: #fffe
   .planner-layout[data-sheet="full"] > .itinerary-panel { flex: 1 1 100%; border-radius: 0; }
   .planner-layout[data-sheet="full"] > .map-section { flex: 0 0 0; }
   .planner-layout[data-sheet="peek"] .panel-contents,
-  .planner-layout[data-sheet="mini"] .panel-contents { display: none; }
+  .planner-layout[data-sheet="mini"] .panel-contents,
+  .planner-layout[data-sheet="hidden"] .panel-contents,
+  .planner-layout[data-sheet="hidden"] .next-stop { display: none; }
+  /* 완전히 내리면 손잡이만 남고 나머지는 지도다. 끌어올리는 동안에는 카드가 다시 보인다. */
+  .planner-layout[data-sheet="hidden"][data-dragging] .next-stop { display: block; }
   .planner-layout[data-dragging] .panel-contents { display: block; }
   .planner-layout[data-dragging] > .itinerary-panel { transition: none; }
   .planner-layout[data-dragging] > .map-section { flex: 1 1 0; }

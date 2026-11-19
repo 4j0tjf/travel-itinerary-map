@@ -82,7 +82,7 @@ export default function TripPlanner({
     setFocusVersion((version) => version + 1);
     if (!mobile) cards.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     // 지도에서 장소를 고르면 카드가 보이게, 목록 전체 화면이면 지도가 보이게 한다.
-    else setSheet((state) => (state === "full" ? "half" : state === "mini" ? "peek" : state));
+    else setSheet((state) => (state === "full" ? "half" : state === "mini" || state === "hidden" ? "peek" : state));
   }, [mobile]);
   useEffect(() => {
     if (day) rememberDaySelection(trip.id, day, selectedId);
