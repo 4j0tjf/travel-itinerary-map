@@ -13,13 +13,13 @@ import {
 import type { Day, LocatedPlace } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
 import {
-  apiKey,
   attachSharedMap,
   detachSharedMap,
   loadMaps,
   onAuthFailure,
 } from "../services/google-maps";
 import type { RoadPath } from "../services/road-routes";
+import { useMapsKey } from "../services/maps-key";
 import {
   LABEL_FONT,
   MOBILE_LABEL_FONT,
@@ -62,7 +62,10 @@ export default function TravelMap({
   const markers = useRef<Record<string, google.maps.Marker>>({});
   const info = useRef<google.maps.InfoWindow | null>(null);
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
+  const { key: apiKey } = useMapsKey();
+  // 오류는 그 키에만 붙인다. 계정이 바뀌어 키가 달라지면 이전 키의 오류는 보이지 않는다.
+  const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
+  const error = failure?.key === apiKey ? failure.message : "";
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [aspect, setAspect] = useState(1.3);
@@ -162,9 +165,10 @@ export default function TravelMap({
     const stopAuthWatch = onAuthFailure(() => {
       authFailed = true;
       if (active)
-        setError(
-          "Google Maps 키 인증에 실패했습니다. 키와 웹사이트 제한을 확인해 주세요.",
-        );
+        setFailure({
+          key: apiKey,
+          message: "Google Maps 키 인증에 실패했습니다. 지도 설정에서 키와 웹사이트 제한을 확인해 주세요.",
+        });
     });
     // 지도 로드는 과금 대상이라, 백그라운드에서 다시 열린 탭은 화면에 보일 때까지 기다린다.
     const start = () => {
@@ -179,7 +183,7 @@ export default function TravelMap({
           setReady(true);
         })
         .catch((e) => {
-          if (active) setError(e.message);
+          if (active) setFailure({ key: apiKey, message: e.message });
         });
     };
     document.addEventListener("visibilitychange", start);
@@ -193,8 +197,9 @@ export default function TravelMap({
       detachSharedMap(mapHost);
       map.current = null;
       info.current = null;
+      setReady(false);
     };
-  }, []);
+  }, [apiKey]);
   useEffect(() => {
     if (!ready || !map.current) return;
     info.current?.close();

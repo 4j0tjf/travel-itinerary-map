@@ -1,4 +1,7 @@
 let mapsPromise: Promise<void> | undefined;
+let loadedKey: string | undefined;
+export const KEY_CHANGED_MESSAGE =
+  "지도 키가 바뀌었습니다. 페이지를 새로고침하면 새 키로 지도를 불러옵니다.";
 let authFailed = false;
 const authListeners = new Set<() => void>();
 
@@ -17,9 +20,13 @@ export function onAuthFailure(listener: () => void) {
   };
 }
 
+// Google 지도 스크립트는 페이지마다 키 하나로만 불러올 수 있다. 다른 키는 새로고침해야 적용된다.
+export const mapsKeyNeedsReload = (key: string) => loadedKey !== undefined && loadedKey !== key;
 export function loadMaps(key: string) {
+  if (mapsKeyNeedsReload(key)) return Promise.reject(new Error(KEY_CHANGED_MESSAGE));
   if (window.google?.maps) return Promise.resolve();
-  if (!mapsPromise)
+  if (!mapsPromise) {
+    loadedKey = key;
     mapsPromise = new Promise((resolve, reject) => {
       installAuthFailureHandler();
       const script = document.createElement("script");
@@ -38,9 +45,11 @@ export function loadMaps(key: string) {
       };
       document.head.appendChild(script);
     });
+  }
   return mapsPromise;
 }
-export const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+// 서버에 빌드할 때 넣은 공용 키. 계정 키가 없을 때만 쓴다. 비워 두면 계정 키가 없는 사용자는 위치 미리보기만 본다.
+export const sharedApiKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
 /* ---------- 페이지당 지도 하나 ---------- */
 // Google은 google.maps.Map을 만들 때마다 지도 로드 1회로 센다. 지도는 페이지에서 한 번만 만들고,

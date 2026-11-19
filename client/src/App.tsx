@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import {
   ArrowDownToLine,
@@ -32,9 +32,12 @@ import {
   getTrips,
   importGoogleSheet,
   logout,
+  removeMapsKey,
   renameTrip,
+  saveMapsKey,
   uploadTrip,
 } from "./services/api";
+import { MapsKeyProvider, resolveMapsKey, type MapsKeyState } from "./services/maps-key";
 import { itineraryPrompt } from "./services/prompts";
 import Dialog from "./components/Dialog";
 import TripPlanner from "./components/TripPlanner";
@@ -104,8 +107,10 @@ export default function App() {
       });
     return () => controller.abort();
   }, [sessionRetry]);
+  // 여행 목록은 계정이 바뀔 때만 다시 불러온다(지도 키를 바꿔도 다시 불러오지 않는다).
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setTrips([]);
       setTripsError("");
       setTripsLoading(false);
@@ -124,7 +129,14 @@ export default function App() {
         if (!controller.signal.aborted) setTripsLoading(false);
       });
     return () => controller.abort();
-  }, [user, tripsRetry]);
+  }, [userId, tripsRetry]);
+  const accountMapsKey = user?.mapsApiKey || "";
+  const mapsKey = useMemo<MapsKeyState>(() => ({
+    ...resolveMapsKey(accountMapsKey),
+    accountKey: accountMapsKey,
+    save: async (key) => setUser((await saveMapsKey(key)).user),
+    remove: async () => setUser((await removeMapsKey()).user),
+  }), [accountMapsKey]);
   useEffect(() => {
     const handle = () => {
       setUser(null);
@@ -298,6 +310,7 @@ export default function App() {
             ? "일정 이름 변경"
             : "여행 일정을 삭제할까요?";
   return (
+    <MapsKeyProvider value={mapsKey}>
     <div className={`app-shell ${page === "guide" ? "guide-shell" : ""} ${page === "trips" && selectedTrip && user && !tripsLoading ? "has-trip" : ""}`}>
       <header className="app-header">
         <a href="#guide" className="brand" aria-label="여정 가이드 홈">
@@ -937,5 +950,6 @@ export default function App() {
         </Dialog>
       )}
     </div>
+    </MapsKeyProvider>
   );
 }

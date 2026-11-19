@@ -16,12 +16,12 @@ import {
   Route,
   Settings2,
   Trash2,
-  Check,
 } from "lucide-react";
 import type { Itinerary } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
 import TravelMap from "./TravelMap";
 import Dialog from "./Dialog";
+import MapKeySettings from "./MapKeySettings";
 import { useRoadRoutes } from "../services/road-routes";
 import { useMobileLayout } from "../services/use-mobile-layout";
 import { useAdaptiveTabs } from "../services/use-adaptive-tabs";
@@ -417,42 +417,12 @@ export default function TripPlanner({
       </main>
       {modal && (
         <Dialog
-          title={modal === "settings" ? "여행 지도 안내" : "날짜별 전체 일정"}
+          title={modal === "settings" ? "지도 설정" : "날짜별 전체 일정"}
           onClose={() => setModal(null)}
           wide={modal === "overview"}
         >
           {modal === "settings" ? (
-            <>
-              <p>Google Maps 연결에는 브라우저용 API 키가 필요합니다.</p>
-              <div className="info-note">
-                <Info size={17} />
-                <p>
-                  자동차·도보 이동은 Google 길찾기 경로로 표시합니다. 같은 이동수단의
-                  연속 구간은 묶어 조회하며 방문 순서를 유지합니다. 좌표가 없는 구간과
-                  기타 이동수단은 임의로 연결하지 않습니다. 키가 없으면 상대 위치만 표시합니다.
-                </p>
-              </div>
-              <ol className="setup-steps">
-                <li>
-                  서버 프로젝트의 <code>.env</code>에 키를 설정하세요.
-                  <code className="code-block">
-                    VITE_GOOGLE_MAPS_API_KEY=브라우저용_키
-                  </code>
-                </li>
-                <li>
-                  Maps JavaScript API와 Routes API를 활성화하고, 웹사이트 제한에{" "}
-                  <code>https://19991115.xyz/*</code>를 추가하세요.
-                </li>
-                <li>
-                  <code>npm run build</code> 후 현재 앱 실행 프로세스를
-                  재시작하세요.
-                </li>
-              </ol>
-              <button className="primary-button" onClick={() => setModal(null)}>
-                확인했어요
-                <Check size={16} />
-              </button>
-            </>
+            <MapKeySettings />
           ) : (
             <div className="overview-days">
               {trip.days.map((d, i) => (

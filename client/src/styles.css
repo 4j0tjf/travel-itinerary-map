@@ -1268,6 +1268,33 @@ h1 {
 .overview-modal {
   width: 570px;
 }
+.map-key-status {
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.map-key-status > span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+.map-key-reload {
+  align-items: center;
+  margin: 14px 0 0;
+}
+.map-key-reload p {
+  flex: 1;
+}
+.map-key-form {
+  margin-top: 12px;
+}
+.map-key-notice {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #4f7a52;
+}
+.map-key-remove {
+  align-self: center;
+  margin-top: 6px;
+}
 .overview-days {
   margin: 28px 0 18px;
 }

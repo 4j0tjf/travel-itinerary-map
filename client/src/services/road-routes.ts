@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Itinerary } from "../types";
 import { request } from "./api";
-import { apiKey, loadMaps } from "./google-maps";
+import { KEY_CHANGED_MESSAGE, loadMaps, mapsKeyNeedsReload } from "./google-maps";
+import { useMapsKey } from "./maps-key";
 
 export type RoadPoint = { lat: number; lng: number };
 export type RoadPath = { key: string; date: string; mode: "DRIVE" | "WALK"; path: RoadPoint[] };
@@ -11,8 +12,8 @@ type RouteResult = { paths: RoadPath[]; failed: number; warnings: string[]; save
 type RouteLibrary = { Route: { computeRoutes(request: Record<string, unknown>): Promise<{ routes?: { path?: RoadPoint[]; warnings?: string[] }[] }> } };
 const pending = new Map<string, Promise<RouteResult>>();
 
-export function loadRoadRoutes(trip: Itinerary): Promise<RouteResult> {
-  const version = `${trip.id}:${trip.source?.importedAt || trip.updatedAt}`;
+export function loadRoadRoutes(trip: Itinerary, apiKey: string): Promise<RouteResult> {
+  const version = `${apiKey}:${trip.id}:${trip.source?.importedAt || trip.updatedAt}`;
   const existing = pending.get(version);
   if (existing) return existing;
   const operation = (async () => {
@@ -65,17 +66,22 @@ export function loadRoadRoutes(trip: Itinerary): Promise<RouteResult> {
 }
 
 export function useRoadRoutes(trip: Itinerary) {
+  const { key: apiKey } = useMapsKey();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState<RouteResult & { loading: boolean; error: string }>({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: Boolean(apiKey), error: "" });
   useEffect(() => {
     let active = true;
+    if (apiKey && mapsKeyNeedsReload(apiKey)) {
+      setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: false, error: KEY_CHANGED_MESSAGE });
+      return;
+    }
     setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: Boolean(apiKey), error: apiKey ? "" : "지도 키가 없어 경로를 조회할 수 없습니다." });
-    if (apiKey) loadRoadRoutes(trip).then(result => {
+    if (apiKey) loadRoadRoutes(trip, apiKey).then(result => {
       if (active) setState({ ...result, loading: false, error: result.failed ? `경로 ${result.failed}건을 조회하지 못했습니다. Routes API 권한·할당량 또는 해당 구간을 확인해 주세요.` : "" });
     }).catch(() => {
       if (active) setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: false, error: "경로를 불러오지 못했습니다. 연결과 로그인 상태를 확인해 주세요." });
     });
     return () => { active = false; };
-  }, [trip.id, trip.source?.importedAt, trip.updatedAt, retry]);
+  }, [trip.id, trip.source?.importedAt, trip.updatedAt, retry, apiKey]);
   return { ...state, retry: () => setRetry(value => value + 1) };
 }

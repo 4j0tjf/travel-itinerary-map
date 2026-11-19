@@ -50,6 +50,10 @@ export const authenticate = (
     body: JSON.stringify({ username, password }),
   });
 export const logout = () => request<void>("/auth/logout", { method: "POST" });
+export const saveMapsKey = (key: string) =>
+  request<{ user: User }>("/account/maps-key", { method: "PUT", body: JSON.stringify({ key }) });
+export const removeMapsKey = () =>
+  request<{ user: User }>("/account/maps-key", { method: "DELETE" });
 export const getTrips = (signal?: AbortSignal) =>
   request<{ trips: Itinerary[] }>("/trips", { signal });
 export const renameTrip = (id: string, title: string) =>

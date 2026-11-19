@@ -137,3 +137,26 @@ it("merges overlapping preview pins, cycles through them, and draws pin numbers 
   const pins = view.container.querySelector(".map-pin-layer")!;
   expect(labels.compareDocumentPosition(pins) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
+
+it("loads Google Maps with the signed-in account's key and asks for a reload when the key changes", async () => {
+  vi.stubGlobal("ResizeObserver", class { observe() {} disconnect() {} });
+  const { default: TravelMap } = await import("../components/TravelMap");
+  const { MapsKeyProvider, resolveMapsKey } = await import("../services/maps-key");
+  const { KEY_CHANGED_MESSAGE } = await import("../services/google-maps");
+  const keyState = (accountKey: string) => ({ ...resolveMapsKey(accountKey), accountKey, save: vi.fn(), remove: vi.fn() });
+  const accountKey = "AIza" + "First".padEnd(35, "1");
+  const props = { day, region: "시즈오카", selectedId: "", focusVersion: 0, onSelect: vi.fn(), onSettings: vi.fn(), routeVisible: false };
+  const view = render(<MapsKeyProvider value={keyState(accountKey)}><TravelMap {...props} /></MapsKeyProvider>);
+  const script = await waitFor(() => {
+    const found = document.head.querySelector<HTMLScriptElement>('script[src^="https://maps.googleapis.com/maps/api/js"]');
+    expect(found).toBeTruthy();
+    return found!;
+  });
+  expect(new URL(script.src).searchParams.get("key")).toBe(accountKey);
+
+  // 같은 페이지에서 다른 계정 키로 바뀌면 지도 스크립트를 다시 불러올 수 없어 새로고침을 안내한다.
+  view.rerender(<MapsKeyProvider value={keyState("AIza" + "Second".padEnd(35, "2"))}><TravelMap {...props} /></MapsKeyProvider>);
+  await screen.findByText(KEY_CHANGED_MESSAGE);
+  expect(screen.getByText("위치 미리보기")).toBeTruthy();
+  script.remove();
+});

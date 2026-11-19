@@ -60,6 +60,16 @@ export function createApp({
   app.post("/api/auth/login", loginLimiter, auth.login);
   app.get("/api/auth/me", auth.me);
   app.post("/api/auth/logout", auth.logout);
+  // 계정마다 자기 Google Maps API 키를 등록한다. 지도 로드·경로 조회 사용량이 그 계정의 키로 잡힌다.
+  app.use("/api/account", auth.requireUser);
+  const accountLimiter = rateLimit({
+    windowMs: 15 * 60000, limit: 20,
+    keyGenerator: (req) => req.user.id,
+    standardHeaders: "draft-8", legacyHeaders: false,
+    message: { error: "지도 키 변경 요청이 많습니다. 잠시 후 다시 시도해 주세요." },
+  });
+  app.put("/api/account/maps-key", accountLimiter, auth.setMapsKey);
+  app.delete("/api/account/maps-key", accountLimiter, auth.removeMapsKey);
   app.get("/api/sample", (_req, res) =>
     res.download(path.join(root, "sample/itinerary.xlsx"), "itinerary.xlsx"),
   );

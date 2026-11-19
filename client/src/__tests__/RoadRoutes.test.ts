@@ -17,7 +17,7 @@ it("reuses server geometry and deduplicates simultaneous and repeated route jobs
   }));
   vi.stubGlobal("fetch", fetcher);
   const { loadRoadRoutes } = await import("../services/road-routes");
-  const [first, second] = await Promise.all([loadRoadRoutes(trip), loadRoadRoutes(trip)]);
+  const [first, second] = await Promise.all([loadRoadRoutes(trip, "test-key"), loadRoadRoutes(trip, "test-key")]);
   expect(first).toBe(second);
   expect(first.paths).toHaveLength(3);
   expect(computeRoutes).toHaveBeenCalledTimes(1);
@@ -37,7 +37,7 @@ it("keeps successful paths when another mode fails and reports failed cache writ
     return json({ jobs: [job("drive"), job("walk", "WALK")], cached: {} });
   }));
   const { loadRoadRoutes } = await import("../services/road-routes");
-  const result = await loadRoadRoutes(trip);
+  const result = await loadRoadRoutes(trip, "test-key");
   expect(result.paths).toHaveLength(1);
   expect(result.failed).toBe(1);
   expect(result.saveFailed).toBe(true);

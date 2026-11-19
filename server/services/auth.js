@@ -11,7 +11,14 @@ const scrypt = promisify(scryptCallback);
 const COOKIE = "travel_session";
 const SESSION_AGE = 30 * 24 * 60 * 60 * 1000;
 const digest = (token) => createHash("sha256").update(token).digest("hex");
-const publicUser = (user) => ({ id: user.id, username: user.username });
+// 본인에게만 돌려주는 정보다. 지도 키는 브라우저에서 Google 지도를 불러올 때 쓴다.
+const publicUser = (user) => ({
+  id: user.id,
+  username: user.username,
+  mapsApiKey: user.mapsApiKey || "",
+});
+// Google API 키는 AIza로 시작하는 39자다.
+const MAPS_KEY = /^AIza[0-9A-Za-z_-]{35}$/;
 const cookieOptions = (req) => ({
   httpOnly: true,
   sameSite: "lax",
@@ -119,6 +126,32 @@ export function createAuth(store) {
     },
     me(req, res) {
       res.json({ user: req.user ? publicUser(req.user) : null });
+    },
+    async setMapsKey(req, res) {
+      const key = typeof req.body?.key === "string" ? req.body.key.trim() : "";
+      if (!MAPS_KEY.test(key))
+        throw new HttpError(
+          400,
+          "Google Maps API 키 형식이 아닙니다. AIza로 시작하는 39자 키를 붙여 넣어 주세요.",
+        );
+      const user = await store.update((db) => {
+        const user = db.users.find((u) => u.id === req.user.id);
+        if (!user) throw new HttpError(401, "로그인이 필요합니다.");
+        user.mapsApiKey = key;
+        user.mapsApiKeyUpdatedAt = new Date().toISOString();
+        return user;
+      });
+      res.json({ user: publicUser(user) });
+    },
+    async removeMapsKey(req, res) {
+      const user = await store.update((db) => {
+        const user = db.users.find((u) => u.id === req.user.id);
+        if (!user) throw new HttpError(401, "로그인이 필요합니다.");
+        delete user.mapsApiKey;
+        delete user.mapsApiKeyUpdatedAt;
+        return user;
+      });
+      res.json({ user: publicUser(user) });
     },
     async logout(req, res) {
       const hash = digest(tokenFrom(req));

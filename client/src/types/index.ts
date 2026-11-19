@@ -1,6 +1,8 @@
 export interface User {
   id: string;
   username: string;
+  // 이 계정이 등록한 Google Maps 브라우저 키. 비어 있으면 공용 키 또는 위치 미리보기를 쓴다.
+  mapsApiKey?: string;
 }
 export interface Place {
   id: string;

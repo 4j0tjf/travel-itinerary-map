@@ -542,3 +542,43 @@ test("concurrent imports do not lose trips", async () =>
     assert.equal(trips.length, 2);
     assert.equal(new Set(trips.map((t) => t.id)).size, 2);
   }));
+
+test("each account registers its own Maps key, which only that account sees", () =>
+  fixture(async ({ start }) => {
+    const base = await start();
+    const key = "AIza" + "Sy_test-Key".padEnd(35, "x");
+    const send = (cookie, method, body) =>
+      fetch(base + "/api/account/maps-key", {
+        method,
+        headers: { ...clientHeader, "Content-Type": "application/json", ...(cookie ? { Cookie: cookie } : {}) },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    const me = async (cookie) =>
+      (await (await fetch(base + "/api/auth/me", { headers: { Cookie: cookie } })).json()).user;
+
+    const owner = await register(base, "owner");
+    const other = await register(base, "other");
+    assert.equal(owner.user.mapsApiKey, "");
+    assert.equal((await send("", "PUT", { key })).status, 401);
+    const bad = await send(owner.cookie, "PUT", { key: "not-a-key" });
+    assert.equal(bad.status, 400);
+    assert.match((await bad.json()).error, /AIza/);
+
+    const saved = await send(owner.cookie, "PUT", { key: `  ${key}  ` });
+    assert.equal(saved.status, 200);
+    assert.equal((await saved.json()).user.mapsApiKey, key);
+    assert.equal((await me(owner.cookie)).mapsApiKey, key);
+    assert.equal((await me(other.cookie)).mapsApiKey, "");
+
+    const login = await fetch(base + "/api/auth/login", {
+      method: "POST",
+      headers: { ...clientHeader, "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "owner", password }),
+    });
+    assert.equal((await login.json()).user.mapsApiKey, key);
+
+    const removed = await send(owner.cookie, "DELETE");
+    assert.equal(removed.status, 200);
+    assert.equal((await removed.json()).user.mapsApiKey, "");
+    assert.equal((await me(owner.cookie)).mapsApiKey, "");
+  }));

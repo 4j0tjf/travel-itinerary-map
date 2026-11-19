@@ -417,4 +417,53 @@ describe("guide and private travel collection", () => {
       screen.getByText("로그인하고, 나의 여행을 펼쳐 보세요."),
     ).toBeTruthy();
   });
+  it("registers, replaces and removes the account's own map key without reloading trips", async () => {
+    const key = "AIza" + "AccountKey".padEnd(35, "1");
+    const next = "AIza" + "ReplacedKey".padEnd(35, "2");
+    let saved = "";
+    const tripLoads = vi.fn();
+    const fetcher = vi.fn(async (url: string, options?: RequestInit) => {
+      if (url === "/api/auth/me") return response({ user: { ...user, mapsApiKey: "" } });
+      if (url === "/api/trips") { tripLoads(); return response({ trips: [itinerary] }); }
+      if (url === "/api/account/maps-key" && options?.method === "PUT") {
+        saved = JSON.parse(String(options.body)).key;
+        return response({ user: { ...user, mapsApiKey: saved } });
+      }
+      if (url === "/api/account/maps-key" && options?.method === "DELETE") {
+        saved = "";
+        return response({ user: { ...user, mapsApiKey: "" } });
+      }
+      throw new Error("Unexpected API request " + url);
+    });
+    vi.stubGlobal("fetch", fetcher);
+    window.location.hash = "trips/shizuoka-test";
+    render(<App />);
+    await screen.findByRole("tab", { name: /시즈오카/, selected: true });
+    fireEvent.click(screen.getByRole("button", { name: "지도 설정" }));
+    const dialog = screen.getByRole("dialog", { name: "지도 설정" });
+    expect(within(dialog).getByText("등록한 키 없음")).toBeTruthy();
+    const input = within(dialog).getByLabelText("내 Google Maps API 키");
+
+    fireEvent.change(input, { target: { value: "not-a-key" } });
+    fireEvent.submit(dialog.querySelector("form")!);
+    expect(within(dialog).getByRole("alert").textContent).toMatch(/AIza/);
+    expect(fetcher.mock.calls.some(([url]) => url === "/api/account/maps-key")).toBe(false);
+
+    fireEvent.change(input, { target: { value: ` ${key} ` } });
+    fireEvent.submit(dialog.querySelector("form")!);
+    await within(dialog).findByText("내 키 사용 중");
+    expect(saved).toBe(key);
+    expect(within(dialog).getByText("AIza…1111")).toBeTruthy();
+
+    fireEvent.change(within(dialog).getByLabelText("새 키로 바꾸기"), { target: { value: next } });
+    fireEvent.submit(dialog.querySelector("form")!);
+    await within(dialog).findByText("AIza…2222");
+    expect(saved).toBe(next);
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "내 키 삭제" }));
+    await within(dialog).findByText("등록한 키 없음");
+    expect(saved).toBe("");
+    expect(tripLoads).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("tab", { name: /시즈오카/, selected: true })).toBeTruthy();
+  });
 });
