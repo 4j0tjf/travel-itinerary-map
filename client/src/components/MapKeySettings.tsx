@@ -4,6 +4,7 @@ import { Check, Info, KeyRound, LoaderCircle, RotateCw, Trash2 } from "lucide-re
 import { ApiError } from "../services/api";
 import { KEY_CHANGED_MESSAGE, mapsKeyNeedsReload } from "../services/google-maps";
 import { resolveMapsKey, useMapsKey } from "../services/maps-key";
+import { MapKeySteps } from "./MapKeyGuide";
 
 // 서버와 같은 규칙: Google API 키는 AIza로 시작하는 39자다.
 const KEY_FORMAT = /^AIza[0-9A-Za-z_-]{35}$/;
@@ -18,7 +19,6 @@ export default function MapKeySettings() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const needsReload = Boolean(maps.key) && mapsKeyNeedsReload(maps.key);
-  const site = `${window.location.origin}${import.meta.env.BASE_URL}*`;
   const status =
     maps.source === "account"
       ? { label: "내 키 사용 중", detail: mask(maps.key) }
@@ -108,22 +108,7 @@ export default function MapKeySettings() {
         )}
       </form>
       <h3>키 만드는 방법</h3>
-      <ol className="setup-steps">
-        <li>
-          Google Cloud 콘솔에서 <strong>Maps JavaScript API</strong>와 <strong>Routes API</strong>를
-          사용 설정합니다.
-        </li>
-        <li>
-          <strong>사용자 인증 정보 → API 키 만들기</strong>에서 애플리케이션 제한사항을 ‘웹사이트’로
-          두고 아래 주소를 추가합니다.
-          <code className="code-block">{site}</code>
-        </li>
-        <li>API 제한사항에서 Maps JavaScript API와 Routes API만 고릅니다.</li>
-        <li>
-          요금이 나오지 않게 하려면 각 API의 <strong>할당량</strong>에서 하루 한도를 낮춰 두세요. 한도를
-          넘으면 과금 대신 지도가 멈춥니다.
-        </li>
-      </ol>
+      <MapKeySteps />
       <div className="info-note">
         <Info size={17} />
         <p>

@@ -466,4 +466,13 @@ describe("guide and private travel collection", () => {
     expect(tripLoads).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("tab", { name: /시즈오카/, selected: true })).toBeTruthy();
   });
+  it("explains on the guide page how to create a Google Maps key for this site", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ user: null })));
+    window.location.hash = "guide-maps-key";
+    render(<App />);
+    const section = (await screen.findByRole("heading", { name: "내 Google 지도 키 만들기" })).closest("section")!;
+    expect(within(section).getByText(/Maps JavaScript API/, { selector: "strong" })).toBeTruthy();
+    expect(within(section).getByText(window.location.origin + "/*")).toBeTruthy();
+    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
+  });
 });

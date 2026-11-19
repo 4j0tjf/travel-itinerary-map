@@ -42,6 +42,7 @@ import { itineraryPrompt } from "./services/prompts";
 import Dialog from "./components/Dialog";
 import TripPlanner from "./components/TripPlanner";
 import RecommendationGuide from "./components/RecommendationGuide";
+import MapKeyGuide from "./components/MapKeyGuide";
 import FollowupPrompt from "./components/FollowupPrompt";
 import TripSourceEditor from "./components/TripSourceEditor";
 import { useAdaptiveTabs } from "./services/use-adaptive-tabs";
@@ -93,6 +94,14 @@ export default function App() {
     window.addEventListener("hashchange", handle);
     return () => window.removeEventListener("hashchange", handle);
   }, []);
+  // #guide-maps-key: 가이드 페이지의 ‘내 Google 지도 키 만들기’로 바로 이동한다.
+  useEffect(() => {
+    if (location !== "guide-maps-key") return;
+    const frame = requestAnimationFrame(() =>
+      document.getElementById("maps-key-guide")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [location]);
   useEffect(() => {
     const controller = new AbortController();
     setSessionLoading(true);
@@ -528,6 +537,7 @@ export default function App() {
           </section>
           <FollowupPrompt />
           <RecommendationGuide />
+          <MapKeyGuide />
           <section className="guide-notes">
             <div>
               <FileSpreadsheet size={23} />

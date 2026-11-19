@@ -9,6 +9,8 @@ import {
   ExternalLink,
   Navigation,
   LoaderCircle,
+  KeyRound,
+  X,
 } from "lucide-react";
 import type { Day, LocatedPlace } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
@@ -16,7 +18,9 @@ import {
   attachSharedMap,
   detachSharedMap,
   loadMaps,
-  onAuthFailure,
+  onMapsFailure,
+  watchMapErrors,
+  type MapsFailure,
 } from "../services/google-maps";
 import type { RoadPath } from "../services/road-routes";
 import { useMapsKey } from "../services/maps-key";
@@ -62,10 +66,12 @@ export default function TravelMap({
   const markers = useRef<Record<string, google.maps.Marker>>({});
   const info = useRef<google.maps.InfoWindow | null>(null);
   const [ready, setReady] = useState(false);
-  const { key: apiKey } = useMapsKey();
+  const { key: apiKey, source: keySource } = useMapsKey();
   // 오류는 그 키에만 붙인다. 계정이 바뀌어 키가 달라지면 이전 키의 오류는 보이지 않는다.
-  const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
-  const error = failure?.key === apiKey ? failure.message : "";
+  const [failure, setFailure] = useState<{ key: string; message: string; kind?: MapsFailure } | null>(null);
+  const currentFailure = failure?.key === apiKey ? failure : null;
+  const error = currentFailure?.message || "";
+  const [keyAlertClosed, setKeyAlertClosed] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [aspect, setAspect] = useState(1.3);
@@ -161,13 +167,19 @@ export default function TravelMap({
     const mapHost = container.current;
     if (!apiKey || !mapHost) return;
     let active = true;
-    let authFailed = false;
-    const stopAuthWatch = onAuthFailure(() => {
-      authFailed = true;
+    let failed = false;
+    let stopErrorWatch = () => {};
+    // 키 인증 실패·사용량 초과가 알려지면 위치 미리보기로 바꾸고 키 등록 안내를 띄운다.
+    const stopFailureWatch = onMapsFailure((kind) => {
+      failed = true;
       if (active)
         setFailure({
           key: apiKey,
-          message: "Google Maps 키 인증에 실패했습니다. 지도 설정에서 키와 웹사이트 제한을 확인해 주세요.",
+          kind,
+          message:
+            kind === "quota"
+              ? "Google Maps 키의 오늘 사용량을 모두 썼습니다. 위치 미리보기로 표시합니다."
+              : "Google Maps 키로 지도를 불러오지 못했습니다. 지도 설정에서 키를 확인해 주세요.",
         });
     });
     // 지도 로드는 과금 대상이라, 백그라운드에서 다시 열린 탭은 화면에 보일 때까지 기다린다.
@@ -176,8 +188,9 @@ export default function TravelMap({
       document.removeEventListener("visibilitychange", start);
       loadMaps(apiKey)
         .then(() => {
-          if (!active || authFailed) return;
+          if (!active || failed) return;
           const shared = attachSharedMap(mapHost);
+          stopErrorWatch = watchMapErrors(shared.element);
           map.current = shared.map;
           info.current = shared.info;
           setReady(true);
@@ -190,7 +203,8 @@ export default function TravelMap({
     start();
     return () => {
       active = false;
-      stopAuthWatch();
+      stopFailureWatch();
+      stopErrorWatch();
       document.removeEventListener("visibilitychange", start);
       Object.values(markers.current).forEach((marker) => marker.setMap(null));
       markers.current = {};
@@ -539,6 +553,35 @@ export default function TravelMap({
             {floatingLabels.map(renderLabel)}
           </g>
         </svg>
+      )}
+      {currentFailure?.kind && !keyAlertClosed && (
+        <div className="maps-key-alert" role="alert">
+          <KeyRound size={19} />
+          <div>
+            <strong>
+              {keySource === "account" ? "내" : "공용"} 지도 키
+              {currentFailure.kind === "quota" ? "의 오늘 사용량을 모두 썼어요" : "로 지도를 불러오지 못했어요"}
+            </strong>
+            <p>
+              {keySource === "account"
+                ? currentFailure.kind === "quota"
+                  ? "사용량은 다음 날 다시 채워져요. 그동안은 위치 미리보기로 보여드려요. 할당량과 키는 지도 설정에서 확인하세요."
+                  : "키가 맞는지, 웹사이트 제한에 이 주소가 들어 있는지, Maps JavaScript API가 켜져 있는지 지도 설정에서 확인해 주세요."
+                : currentFailure.kind === "quota"
+                  ? "내 Google Maps API 키를 등록하면 바로 Google 지도와 길찾기를 볼 수 있어요. 지금은 위치 미리보기로 보여드려요."
+                  : "오늘 사용량을 다 썼거나 공용 키에 문제가 있을 수 있어요. 내 Google Maps API 키를 등록하면 바로 Google 지도를 볼 수 있어요."}
+            </p>
+            <div className="maps-key-alert-actions">
+              <button type="button" className="primary-button" onClick={onSettings}>
+                {keySource === "account" ? "지도 설정 열기" : "내 키 등록하기"}
+              </button>
+              <a href="#guide-maps-key">키 만드는 방법</a>
+            </div>
+          </div>
+          <button type="button" className="icon-button" aria-label="키 안내 닫기" onClick={() => setKeyAlertClosed(true)}>
+            <X size={16} />
+          </button>
+        </div>
       )}
       <div className="map-location">
         <span className="location-dot" />

@@ -2,21 +2,36 @@ let mapsPromise: Promise<void> | undefined;
 let loadedKey: string | undefined;
 export const KEY_CHANGED_MESSAGE =
   "지도 키가 바뀌었습니다. 페이지를 새로고침하면 새 키로 지도를 불러옵니다.";
-let authFailed = false;
-const authListeners = new Set<() => void>();
+// 지도를 못 쓰게 된 이유. quota: 오늘 사용량을 다 씀, unavailable: 키 인증·설정 문제(사용량일 수도 있음).
+export type MapsFailure = "quota" | "unavailable";
+let failure: MapsFailure | undefined;
+const failureListeners = new Set<(kind: MapsFailure) => void>();
 
-// Google은 키 인증 실패를 페이지에 한 번만 알려 준다. 지도를 다시 붙이는 화면도 알 수 있게 기억해 둔다.
-function installAuthFailureHandler() {
-  (window as unknown as Record<string, unknown>).gm_authFailure = () => {
-    authFailed = true;
-    authListeners.forEach((listener) => listener());
+// 지도 실패는 페이지에 한 번만 알려진다. 지도를 다시 붙이는 화면도 알 수 있게 기억해 둔다.
+export function reportMapsFailure(kind: MapsFailure) {
+  if (failure === "quota") return; // 사용량 초과가 더 구체적인 이유라 덮어쓰지 않는다.
+  failure = kind;
+  failureListeners.forEach((listener) => listener(kind));
+}
+export function onMapsFailure(listener: (kind: MapsFailure) => void) {
+  if (failure) listener(failure);
+  failureListeners.add(listener);
+  return () => {
+    failureListeners.delete(listener);
   };
 }
-export function onAuthFailure(listener: () => void) {
-  if (authFailed) listener();
-  authListeners.add(listener);
-  return () => {
-    authListeners.delete(listener);
+
+// Google은 사용량 초과 때 gm_authFailure를 부르지 않고 콘솔에 OverQuotaMapError 같은 오류만 남긴다.
+// 그래서 세 가지를 함께 본다: gm_authFailure, 콘솔의 "…MapError", 지도 위 오류 화면(watchMapErrors).
+export const mapsErrorKind = (text: string): MapsFailure | undefined =>
+  /OverQuota|OverDailyLimit/i.test(text) ? "quota" : /\b[A-Za-z]+MapError\b/.test(text) ? "unavailable" : undefined;
+function installFailureWatchers() {
+  (window as unknown as Record<string, unknown>).gm_authFailure = () => reportMapsFailure("unavailable");
+  const original = console.error.bind(console);
+  console.error = (...args: unknown[]) => {
+    const kind = mapsErrorKind(args.map(String).join(" "));
+    if (kind) reportMapsFailure(kind);
+    original(...args);
   };
 }
 
@@ -28,7 +43,7 @@ export function loadMaps(key: string) {
   if (!mapsPromise) {
     loadedKey = key;
     mapsPromise = new Promise((resolve, reject) => {
-      installAuthFailureHandler();
+      installFailureWatchers();
       const script = document.createElement("script");
       script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&language=ko&loading=async&callback=__travelMapsReady`;
       const timeout = window.setTimeout(
@@ -87,6 +102,17 @@ export function attachSharedMap(host: HTMLElement): SharedMap {
     info: new google.maps.InfoWindow({ disableAutoPan: true }),
   };
   return shared;
+}
+
+// Google은 지도를 못 불러오면 지도 자리에 자체 오류 화면(.gm-err-container)이나 안내 창을 띄운다.
+export function watchMapErrors(element: HTMLElement) {
+  const check = () => {
+    if (element.querySelector(".gm-err-container, .gm-err-message")) reportMapsFailure("unavailable");
+  };
+  const observer = new MutationObserver(check);
+  observer.observe(element, { childList: true, subtree: true });
+  check();
+  return () => observer.disconnect();
 }
 
 // 화면이 사라질 때 지도를 떼어 두고, 다음 화면에 이전 여행 위치·지형 설정이 남지 않게 초기 상태로 돌린다.

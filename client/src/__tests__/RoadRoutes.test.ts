@@ -44,3 +44,15 @@ it("keeps successful paths when another mode fails and reports failed cache writ
   expect(result.warnings).toEqual(["Test warning"]);
   expect(computeRoutes.mock.calls.find(([options]) => options.travelMode === "WALKING")?.[0]).not.toHaveProperty("routingPreference");
 });
+
+it("flags route failures caused by an exhausted quota", async () => {
+  const computeRoutes = vi.fn().mockRejectedValue(Object.assign(new Error("Quota exceeded for quota metric"), { code: "RESOURCE_EXHAUSTED" }));
+  vi.stubGlobal("google", { maps: { importLibrary: vi.fn().mockResolvedValue({ Route: { computeRoutes } }) } });
+  vi.stubGlobal("fetch", vi.fn(async () => json({ jobs: [job("drive")], cached: {} })));
+  const { isQuotaError, loadRoadRoutes } = await import("../services/road-routes");
+  const result = await loadRoadRoutes(trip, "test-key");
+  expect(result.failed).toBe(1);
+  expect(result.quota).toBe(true);
+  expect(isQuotaError(new Error("No route"))).toBe(false);
+  expect(isQuotaError({ code: 429 })).toBe(true);
+});

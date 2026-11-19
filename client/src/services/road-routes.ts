@@ -8,7 +8,12 @@ export type RoadPoint = { lat: number; lng: number };
 export type RoadPath = { key: string; date: string; mode: "DRIVE" | "WALK"; path: RoadPoint[] };
 export type RouteJob = Omit<RoadPath, "path"> & { stops: RoadPoint[] };
 type Geometry = { path: RoadPoint[]; expiresAt: number };
-type RouteResult = { paths: RoadPath[]; failed: number; warnings: string[]; saveFailed: boolean };
+type RouteResult = { paths: RoadPath[]; failed: number; warnings: string[]; saveFailed: boolean; quota?: boolean };
+// Routes API는 사용량을 넘으면 RESOURCE_EXHAUSTED(429) 같은 오류를 돌려준다.
+export const isQuotaError = (error: unknown) => {
+  const detail = error && typeof error === "object" ? `${(error as { code?: unknown }).code ?? ""} ${(error as { message?: unknown }).message ?? ""}` : String(error);
+  return /quota|RESOURCE_EXHAUSTED|OVER_QUERY_LIMIT|rate.?limit|\b429\b/i.test(detail);
+};
 type RouteLibrary = { Route: { computeRoutes(request: Record<string, unknown>): Promise<{ routes?: { path?: RoadPoint[]; warnings?: string[] }[] }> } };
 const pending = new Map<string, Promise<RouteResult>>();
 
@@ -55,7 +60,10 @@ export function loadRoadRoutes(trip: Itinerary, apiKey: string): Promise<RouteRe
       while (index < jobs.length) {
         const job = jobs[index++];
         try { result.paths.push({ key: job.key, date: job.date, mode: job.mode, path: await geometry(job) }); }
-        catch { result.failed++; }
+        catch (error) {
+          result.failed++;
+          if (isQuotaError(error)) result.quota = true;
+        }
       }
     }));
     return result;
@@ -66,7 +74,7 @@ export function loadRoadRoutes(trip: Itinerary, apiKey: string): Promise<RouteRe
 }
 
 export function useRoadRoutes(trip: Itinerary) {
-  const { key: apiKey } = useMapsKey();
+  const { key: apiKey, source } = useMapsKey();
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState<RouteResult & { loading: boolean; error: string }>({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: Boolean(apiKey), error: "" });
   useEffect(() => {
@@ -77,7 +85,12 @@ export function useRoadRoutes(trip: Itinerary) {
     }
     setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: Boolean(apiKey), error: apiKey ? "" : "지도 키가 없어 경로를 조회할 수 없습니다." });
     if (apiKey) loadRoadRoutes(trip, apiKey).then(result => {
-      if (active) setState({ ...result, loading: false, error: result.failed ? `경로 ${result.failed}건을 조회하지 못했습니다. Routes API 권한·할당량 또는 해당 구간을 확인해 주세요.` : "" });
+      const owner = source === "account" ? "내" : "공용";
+      const error = !result.failed ? ""
+        : result.quota
+          ? `${owner} 지도 키의 길찾기 사용량을 모두 써서 경로 ${result.failed}건을 불러오지 못했습니다. ${source === "account" ? "사용량은 다음 날 다시 채워집니다." : "지도 설정에서 내 키를 등록하면 바로 불러올 수 있습니다."}`
+          : `경로 ${result.failed}건을 조회하지 못했습니다. Routes API 권한·할당량 또는 해당 구간을 확인해 주세요.`;
+      if (active) setState({ ...result, loading: false, error });
     }).catch(() => {
       if (active) setState({ paths: [], failed: 0, warnings: [], saveFailed: false, loading: false, error: "경로를 불러오지 못했습니다. 연결과 로그인 상태를 확인해 주세요." });
     });

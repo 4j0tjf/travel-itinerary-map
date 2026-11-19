@@ -347,6 +347,7 @@ h1 {
   pointer-events: none;
 }
 .planner-toolbar .date-toolbar { position: static; }
+.date-tabs-frame { display: flex; flex: 1; min-width: 0; }
 .mobile-view-switch, .mobile-show-map, .map-place-preview > .preview-open-list { display: none; }
 .map-section {
   position: relative;
@@ -2542,6 +2543,72 @@ textarea {
   line-height: 1.9;
   margin: 0;
 }
+.maps-key-alert {
+  position: absolute;
+  z-index: 4;
+  top: 125px;
+  right: 18px;
+  width: min(380px, calc(100% - 36px));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 16px;
+  background: #fffefa;
+  border: 1px solid #ecdcc0;
+  border-left: 4px solid #c9893a;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px #43533c24;
+  color: #4f5d48;
+}
+.maps-key-alert > svg {
+  color: #b0762c;
+  margin-top: 3px;
+}
+.maps-key-alert strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.45;
+  color: #3f4c39;
+  text-wrap: balance;
+  word-break: keep-all;
+}
+.maps-key-alert p {
+  word-break: keep-all;
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.maps-key-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+}
+.maps-key-alert-actions .primary-button {
+  width: auto;
+  padding: 9px 14px;
+  font-size: 15px;
+}
+.maps-key-alert-actions a {
+  font-size: 14px;
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.maps-key-alert > .icon-button {
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  color: #8a9581;
+}
 .coordinate-notice {
   position: absolute;
   left: 29px;
@@ -3130,6 +3197,12 @@ body { line-height: 1.65; }
 .trip-card h2, .trip-card-title { overflow-wrap: anywhere; }
 
 .recommendation-guide { margin-top: 44px; padding: 32px 0; border-top: 1px solid var(--border); }
+.map-key-guide { margin-top: 12px; padding: 32px 0; border-top: 1px solid var(--border); scroll-margin-top: 72px; }
+.map-key-guide .setup-steps { max-width: 760px; margin: 20px 0 0; color: #465740; font-size: 16px; word-break: keep-all; }
+.map-key-steps a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.map-key-steps strong { color: #3f5139; font-weight: 600; }
+.map-key-guide-links { margin: 18px 0 0; }
+.map-key-guide-links a { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: var(--green); }
 .trip-source-editor p { font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
 .source-help, .source-refresh { padding: 18px; border: 1px solid var(--border); border-radius: 10px; background: #f3f6ee; }
 .source-help > strong, .source-refresh > strong { font-size: 16px; line-height: 1.8; color: #285748; }
@@ -3246,7 +3319,7 @@ body { line-height: 1.65; }
   .mobile-view-switch button > span { font-size: 14px; opacity: .85; }
   .planner-toolbar .date-toolbar { margin-top: 8px; gap: 8px; min-width: 0; }
   .planner-toolbar .date-tabs {
-    flex: 1; width: auto; min-width: 0; max-width: calc(100% - 52px);
+    flex: 1; width: auto; min-width: 0; max-width: 100%;
     padding: 0 0 2px; gap: 5px; background: transparent; border: 0; box-shadow: none; scrollbar-width: thin;
   }
   .planner-toolbar .date-tab { min-width: 104px; min-height: 62px; padding: 7px 10px; gap: 2px; background: #eef2e9; }
@@ -3257,6 +3330,7 @@ body { line-height: 1.65; }
   .map-section { height: auto; min-height: 0; overflow: visible; }
   .travel-map { flex: none; height: clamp(360px, 60svh, 640px); min-height: 360px; }
   .travel-map .map-location { display: none; }
+  .travel-map .maps-key-alert { top: 12px; left: 12px; right: 12px; width: auto; }
   .map-tools { top: 12px; right: 12px; bottom: auto; gap: 8px; }
   .map-tools .icon-button, .zoom-group .icon-button { width: 44px; height: 44px; }
   .map-bottom { top: 12px; bottom: auto; left: 12px; right: 76px; justify-content: flex-start; }
@@ -3399,7 +3473,7 @@ body { line-height: 1.65; }
   .planner-toolbar .date-tabs {
     display: grid; grid-template-columns: repeat(var(--tab-columns, 1), var(--tab-width, 116px));
     grid-template-rows: repeat(var(--tab-rows, 1), 52px);
-    flex: 1; width: auto; min-width: 0; max-width: calc(100% - 44px);
+    flex: 0 1 auto; width: max-content; min-width: 0; max-width: 100%;
     padding: 0; gap: 4px; border: 0; background: transparent; overflow-x: auto; overflow-y: hidden;
   }
   .planner-toolbar .date-tab {
@@ -3414,6 +3488,8 @@ body { line-height: 1.65; }
   .planner-layout:has(.date-tabs[data-rows="2"]) .map-location { top: 130px; }
   .coordinate-notice { top: 102px; }
   .planner-layout:has(.date-tabs[data-rows="2"]) .coordinate-notice { top: 156px; }
+  .travel-map .maps-key-alert { top: 76px; }
+  .planner-layout:has(.date-tabs[data-rows="2"]) .maps-key-alert { top: 130px; }
   .journey-note { display: none; }
   .road-route-status { padding: 8px 16px; gap: 3px; line-height: 1.5; }
   .road-route-status p { margin: 4px 0; }

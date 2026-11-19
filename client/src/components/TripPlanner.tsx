@@ -165,7 +165,9 @@ export default function TripPlanner({
             <button aria-pressed={mobileView === "list"} onClick={() => switchView("list")}><List size={18} />일정 <span>{day.places.length}</span></button>
           </div>
           <div className="date-toolbar">
-            <div className="date-tabs" ref={dateTabs.ref} style={dateTabs.style} data-rows={dateTabs.rows} role="tablist" aria-label="여행 날짜">
+            {/* 바깥 틀은 남는 너비를 재기만 하고 클릭은 지도로 넘긴다. 탭 묶음은 탭만큼만 차지한다. */}
+            <div className="date-tabs-frame" ref={dateTabs.ref}>
+            <div className="date-tabs" style={dateTabs.style} data-rows={dateTabs.rows} role="tablist" aria-label="여행 날짜">
               {trip.days.map((d, i) => (
                 <button
                   key={d.date}
@@ -187,6 +189,7 @@ export default function TripPlanner({
                   {dayIndex === i && <span className="tab-dot" />}
                 </button>
               ))}
+            </div>
             </div>
             <button
               className="date-calendar icon-button"
