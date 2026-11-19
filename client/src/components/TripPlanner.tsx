@@ -19,7 +19,7 @@ import Dialog from "./Dialog";
 import MapKeySettings from "./MapKeySettings";
 import NextStopCard from "./NextStopCard";
 import TripMenu from "./TripMenu";
-import { SheetGrip, type SheetState } from "./BottomSheet";
+import { SheetGrip, useSheetDrag, type SheetState } from "./BottomSheet";
 import { ROUTE_STYLES, useRoadRoutes } from "../services/road-routes";
 import { useMobileLayout } from "../services/use-mobile-layout";
 import { useAdaptiveTabs } from "../services/use-adaptive-tabs";
@@ -60,6 +60,7 @@ export default function TripPlanner({
   const [focusVersion, setFocusVersion] = useState(0);
   const [now, setNow] = useState(() => new Date());
   const [sheet, setSheet] = useState<SheetState>("peek");
+  const sheetDrag = useSheetDrag(sheet, setSheet);
   const [routeNotesOpen, setRouteNotesOpen] = useState(false);
   const mobile = useMobileLayout();
   const { key: mapsKey } = useMapsKey();
@@ -80,7 +81,8 @@ export default function TripPlanner({
     setSelectedId(id);
     setFocusVersion((version) => version + 1);
     if (!mobile) cards.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    else setSheet((state) => (state === "full" ? "half" : state));
+    // 지도에서 장소를 고르면 카드가 보이게, 목록 전체 화면이면 지도가 보이게 한다.
+    else setSheet((state) => (state === "full" ? "half" : state === "mini" ? "peek" : state));
   }, [mobile]);
   useEffect(() => {
     if (day) rememberDaySelection(trip.id, day, selectedId);
@@ -261,25 +263,40 @@ export default function TripPlanner({
           )}
         </section>
         <aside
+          ref={sheetDrag.sheetRef}
           id="day-panel"
           className="itinerary-panel"
           role="tabpanel"
           aria-labelledby={`day-tab-${dayIndex}`}
         >
-          {mobile && <SheetGrip state={sheet} onState={setSheet} />}
-          {(mobile || today >= 0) && (
-            <NextStopCard
-              day={day}
-              dayIndex={dayIndex}
-              selectedId={selectedId}
-              now={now}
-              location={location.position}
-              onSelect={selectPlace}
-              onShowDetails={mobile ? showSelectedInList : undefined}
-              onJumpToNow={jumpToNow}
-            />
+          {mobile ? (
+            <div className="sheet-head" {...sheetDrag.headHandlers}>
+              <SheetGrip state={sheet} onState={setSheet} />
+              <NextStopCard
+                day={day}
+                dayIndex={dayIndex}
+                selectedId={selectedId}
+                now={now}
+                location={location.position}
+                onSelect={selectPlace}
+                onShowDetails={showSelectedInList}
+                onJumpToNow={jumpToNow}
+              />
+            </div>
+          ) : (
+            today >= 0 && (
+              <NextStopCard
+                day={day}
+                dayIndex={dayIndex}
+                selectedId={selectedId}
+                now={now}
+                location={location.position}
+                onSelect={selectPlace}
+                onJumpToNow={jumpToNow}
+              />
+            )
           )}
-          <div className="panel-contents">
+          <div className="panel-contents" ref={mobile ? sheetDrag.listRef : undefined}>
             <div className="panel-hero">
               <div className="hero-art" aria-hidden="true">
                 <Mountain size={160} strokeWidth={0.65} />

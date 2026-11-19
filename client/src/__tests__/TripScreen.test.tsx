@@ -84,20 +84,53 @@ it("hides the now card outside the trip and keeps day one first", () => {
   expect(screen.queryByRole("region", { name: "지금 보는 장소" })).toBeNull();
 });
 
-it("moves the phone itinerary sheet between peek, half and full", () => {
+it("moves the phone itinerary sheet by tapping the grip, dragging the card and pulling the list", async () => {
+  const afterDrag = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: true, media: query, addEventListener() {}, removeEventListener() {} }));
   const { container } = render(<TripPlanner trip={trip} {...handlers} />);
   const layout = container.querySelector(".planner-layout")!;
+  const head = container.querySelector<HTMLElement>(".sheet-head")!;
+  const list = container.querySelector<HTMLElement>(".panel-contents")!;
+  const dragHead = (from: number, to: number, target: Element = head) => {
+    fireEvent.pointerDown(target, { clientY: from, pointerId: 1, button: 0 });
+    fireEvent.pointerMove(target, { clientY: (from + to) / 2, pointerId: 1 });
+    fireEvent.pointerMove(target, { clientY: to, pointerId: 1 });
+    fireEvent.pointerUp(target, { clientY: to, pointerId: 1 });
+  };
   expect(layout.getAttribute("data-sheet")).toBe("peek");
-  fireEvent.click(screen.getByRole("button", { name: "일정 목록 펼치기" })); // 키보드로 누른 것과 같다.
+  fireEvent.click(screen.getByRole("button", { name: "일정 목록 펼치기" }));
   expect(layout.getAttribute("data-sheet")).toBe("half");
-  const grip = screen.getByRole("button", { name: "일정 목록 크게 보기" });
-  grip.setPointerCapture = () => {};
-  fireEvent.pointerDown(grip, { clientY: 400, pointerId: 1 });
-  fireEvent.pointerUp(grip, { clientY: 300, pointerId: 1 });
+
+  dragHead(400, 300); // 카드를 잡고 위로
+  await afterDrag();
   expect(layout.getAttribute("data-sheet")).toBe("full");
+  expect(layout.hasAttribute("data-dragging")).toBe(false);
+
+  // 목록이 맨 위일 때 아래로 당기면 접힌다.
+  fireEvent.touchStart(list, { touches: [{ clientY: 100 }] });
+  fireEvent.touchMove(list, { touches: [{ clientY: 160 }] });
+  fireEvent.touchMove(list, { touches: [{ clientY: 230 }] });
+  fireEvent.touchEnd(list, { changedTouches: [{ clientY: 230 }] });
+  expect(layout.getAttribute("data-sheet")).toBe("half");
+
+  fireEvent.click(screen.getByRole("button", { name: "일정 목록 접기" }));
+  expect(layout.getAttribute("data-sheet")).toBe("peek");
+
+  // 카드를 아래로 내리면 한 줄만 남고, 누르면 다시 카드가 열린다.
+  const next = screen.getByRole("button", { name: "다음 장소" });
+  const before = within(head).getByRole("region").textContent;
+  dragHead(300, 420, next);
+  fireEvent.click(next); // 끈 뒤 손을 뗀 자리의 버튼은 눌리지 않는다.
+  expect(within(head).getByRole("region").textContent).toBe(before);
+  expect(layout.getAttribute("data-sheet")).toBe("mini");
+  await afterDrag();
+  fireEvent.click(head.querySelector(".next-stop")!);
+  expect(layout.getAttribute("data-sheet")).toBe("peek");
+
   fireEvent.click(screen.getByRole("button", { name: "일정 자세히" }));
   expect(layout.getAttribute("data-sheet")).toBe("half");
+  fireEvent.click(head.querySelector(".next-stop")!); // 펼친 상태의 한 줄 카드를 누르면 카드로 돌아간다.
+  expect(layout.getAttribute("data-sheet")).toBe("peek");
 });
 
 it("shows my location on the preview map and turns it off from the same button", () => {

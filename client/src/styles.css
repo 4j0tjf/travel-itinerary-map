@@ -3774,15 +3774,31 @@ button.map-location:hover, button.map-location:focus-visible { background: #fffe
   .planner-layout[data-sheet="half"] > .itinerary-panel { flex: 0 0 56%; }
   .planner-layout[data-sheet="full"] > .itinerary-panel { flex: 1 1 100%; border-radius: 0; }
   .planner-layout[data-sheet="full"] > .map-section { flex: 0 0 0; }
-  .planner-layout[data-sheet="peek"] .panel-contents { display: none; }
+  .planner-layout[data-sheet="peek"] .panel-contents,
+  .planner-layout[data-sheet="mini"] .panel-contents { display: none; }
+  .planner-layout[data-dragging] .panel-contents { display: block; }
+  .planner-layout[data-dragging] > .itinerary-panel { transition: none; }
+  .planner-layout[data-dragging] > .map-section { flex: 1 1 0; }
+  .sheet-head { flex-shrink: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+  /* 카드를 끝까지 내리거나 목록을 펼치면 번호와 장소 이름 한 줄만 남긴다. 누르면 카드로 돌아간다. */
+  .planner-layout:not([data-sheet="peek"]) .next-stop { padding-bottom: 10px; cursor: pointer; }
+  .planner-layout:not([data-sheet="peek"]) .next-stop-label,
+  .planner-layout:not([data-sheet="peek"]) .next-stop-time,
+  .planner-layout:not([data-sheet="peek"]) .next-stop-text p,
+  .planner-layout:not([data-sheet="peek"]) .next-stop-steps,
+  .planner-layout:not([data-sheet="peek"]) .next-stop-actions { display: none; }
+  .planner-layout:not([data-sheet="peek"]) .next-stop-main { margin-top: 0; align-items: center; }
+  .planner-layout:not([data-sheet="peek"]) .next-stop-number { width: 30px; height: 30px; font-size: 14px; }
+  .planner-layout:not([data-sheet="peek"]) .next-stop-text strong { font-size: 16px; }
   .itinerary-panel .panel-contents { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
   .sheet-grip {
     display: grid; place-items: center; flex-shrink: 0;
-    width: 100%; height: 26px; padding: 0; background: transparent; touch-action: none; cursor: grab;
+    width: 100%; height: 28px; padding: 0; background: transparent; touch-action: none; cursor: grab;
   }
   .sheet-grip span { width: 42px; height: 5px; border-radius: 3px; background: #c7d1bf; }
   .itinerary-panel .next-stop { padding: 2px 16px 12px; background: transparent; border-bottom: 1px solid var(--border); }
-  .planner-layout[data-sheet="peek"] .itinerary-panel .next-stop { border-bottom: 0; }
+  .planner-layout[data-sheet="peek"] .itinerary-panel .next-stop,
+  .planner-layout[data-sheet="mini"] .itinerary-panel .next-stop { border-bottom: 0; }
   .itinerary-panel .day-heading { padding: 14px 16px 12px; }
   .itinerary-panel .day-heading h2 { font-size: 19px; margin-top: 6px; }
   .itinerary-panel .day-heading > p { font-size: 15px; margin: 4px 0 0; }
