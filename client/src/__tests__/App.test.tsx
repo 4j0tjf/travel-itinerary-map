@@ -84,6 +84,10 @@ const response = (data: unknown, status = 200) =>
     status,
     headers: { "Content-Type": "application/json" },
   });
+const openTripMenuItem = (name: string) => {
+  fireEvent.click(screen.getByRole("button", { name: "여행 관리" }));
+  fireEvent.click(screen.getByRole("menuitem", { name }));
+};
 const writeText = vi.fn().mockResolvedValue(undefined);
 beforeEach(() => {
   window.location.hash = "guide";
@@ -228,13 +232,13 @@ describe("guide and private travel collection", () => {
     fireEvent.click(screen.getByRole("tab", { name: /DAY 02/ }));
     expect(screen.getByRole("button", { name: "1. 순푸성 공원" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "1. 시즈오카역" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "이름 변경" }));
+    openTripMenuItem("이름 변경");
     fireEvent.change(screen.getByLabelText("일정 이름"), {
       target: { value: "겨울 시즈오카" },
     });
     fireEvent.click(screen.getByRole("button", { name: "이름 저장" }));
     await screen.findByRole("tab", { name: /겨울 시즈오카/ });
-    fireEvent.click(screen.getByRole("button", { name: "일정 삭제" }));
+    openTripMenuItem("일정 삭제");
     fireEvent.click(
       within(screen.getByRole("dialog")).getByRole("button", {
         name: "일정 삭제",
@@ -272,7 +276,7 @@ describe("guide and private travel collection", () => {
     render(<App />);
     await screen.findByRole("tab", { name: /시즈오카/, selected: true });
     fireEvent.click(screen.getByRole("tab", { name: /DAY 02/ }));
-    fireEvent.click(screen.getByRole("button", { name: "일정 수정" }));
+    openTripMenuItem("일정 수정");
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByRole("button", { name: "원본 Excel 내려받기" })).toBeTruthy();
     fireEvent.change(within(dialog).getByLabelText("수정한 Excel 파일"), { target: { files: [new File(["edited"], "edited.xlsx")] } });
@@ -311,7 +315,7 @@ describe("guide and private travel collection", () => {
     window.location.hash = "trips/shizuoka-test";
     render(<App />);
     await screen.findByRole("tab", { name: /시즈오카/, selected: true });
-    fireEvent.click(screen.getByRole("button", { name: "일정 수정" }));
+    openTripMenuItem("일정 수정");
     const dialog = screen.getByRole("dialog");
     expect(within(dialog).getByRole("button", { name: "현재 일정 Excel 내려받기" })).toBeTruthy();
     fireEvent.click(within(dialog).getByRole("tab", { name: "구글 시트" }));

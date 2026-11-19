@@ -39,12 +39,12 @@ export function rememberDaySelection(tripId: string, day: Day, placeId: string) 
   write(tripId, { ...selections, [day.date]: { id: placeId, index } });
 }
 
-// 그 날짜에서 보던 장소가 있으면 그 장소, 없으면 첫 장소.
+// 그 날짜에서 보던 장소가 있으면 그 장소, 없으면 fallback(기본은 첫 장소).
 // 시트를 다시 가져와 장소 ID가 바뀌었으면 같은 번호를 쓴다.
-export function restoreDaySelection(tripId: string, day: Day | undefined) {
+export function restoreDaySelection(tripId: string, day: Day | undefined, fallback?: string) {
   if (!day?.places.length) return "";
   const remembered = read(tripId)[day.date];
-  if (!remembered) return day.places[0].id;
+  if (!remembered) return day.places.some((p) => p.id === fallback) ? fallback! : day.places[0].id;
   const byId = day.places.find((p) => p.id === remembered.id);
   if (byId) return byId.id;
   return day.places[Number.isInteger(remembered.index) ? remembered.index : 0]?.id ?? day.places[0].id;

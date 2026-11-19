@@ -2,30 +2,31 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
-  List,
   Map as MapIcon,
-  ChevronRight,
   ExternalLink,
   Info,
   Leaf,
   MapPin,
   Mountain,
   Navigation,
-  Pencil,
-  FilePenLine,
   Route,
   Settings2,
-  Trash2,
 } from "lucide-react";
 import type { Itinerary } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
 import TravelMap from "./TravelMap";
 import Dialog from "./Dialog";
 import MapKeySettings from "./MapKeySettings";
+import NextStopCard from "./NextStopCard";
+import TripMenu from "./TripMenu";
+import { SheetGrip, type SheetState } from "./BottomSheet";
 import { ROUTE_STYLES, useRoadRoutes } from "../services/road-routes";
 import { useMobileLayout } from "../services/use-mobile-layout";
 import { useAdaptiveTabs } from "../services/use-adaptive-tabs";
 import { rememberDaySelection, restoreDaySelection } from "../services/day-selection";
+import { directionsUrl, localDate, stopTiming, todayIndex } from "../services/trip-time";
+import { useCurrentLocation } from "../services/use-current-location";
+import { useMapsKey } from "../services/maps-key";
 const weekday = (date: string) =>
   new Date(date + "T12:00:00").toLocaleDateString("ko-KR", { weekday: "long" });
 const shortDate = (date: string) =>
@@ -44,11 +45,25 @@ export default function TripPlanner({
   onDelete: () => void;
   onEdit: () => void;
 }) {
-  const [dayIndex, setDayIndex] = useState(0);
-  const [selectedId, setSelectedId] = useState(() => restoreDaySelection(trip.id, trip.days[0]));
+  // 여행 기간 중이면 오늘 날짜와 지금·다음 장소부터 연다.
+  const nowStopId = (index: number, at: Date) => {
+    const target = trip.days[index];
+    if (!target || target.date !== localDate(at)) return undefined;
+    const timing = stopTiming(target, at);
+    return timing ? target.places[timing.index]?.id : undefined;
+  };
+  const [dayIndex, setDayIndex] = useState(() => Math.max(0, todayIndex(trip, new Date())));
+  const [selectedId, setSelectedId] = useState(() => {
+    const index = Math.max(0, todayIndex(trip, new Date()));
+    return restoreDaySelection(trip.id, trip.days[index], nowStopId(index, new Date()));
+  });
   const [focusVersion, setFocusVersion] = useState(0);
-  const [mobileView, setMobileView] = useState<"map" | "list">("map");
+  const [now, setNow] = useState(() => new Date());
+  const [sheet, setSheet] = useState<SheetState>("peek");
+  const [routeNotesOpen, setRouteNotesOpen] = useState(false);
   const mobile = useMobileLayout();
+  const { key: mapsKey } = useMapsKey();
+  const location = useCurrentLocation();
   const dateTabs = useAdaptiveTabs(trip.days.length, 116, 82);
   const [routeVisible, setRouteVisible] = useState(true);
   const [modal, setModal] = useState<"settings" | "overview" | null>(null);
@@ -57,51 +72,66 @@ export default function TripPlanner({
   const day = trip.days[dayIndex];
   const routes = useRoadRoutes(trip);
   const dayRoutes = useMemo(() => routes.paths.filter(path => path.date === day?.date), [routes.paths, day?.date]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   const selectPlace = useCallback((id: string) => {
     setSelectedId(id);
     setFocusVersion((version) => version + 1);
     if (!mobile) cards.current[id]?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    else setSheet((state) => (state === "full" ? "half" : state));
   }, [mobile]);
   useEffect(() => {
     if (day) rememberDaySelection(trip.id, day, selectedId);
   }, [trip.id, day, selectedId]);
+  const scrollList = (id: string, resumed: boolean) =>
+    requestAnimationFrame(() => {
+      if (resumed) cards.current[id]?.scrollIntoView({ behavior: "smooth", block: mobile ? "start" : "nearest" });
+      else for (const scroller of document.querySelectorAll("#day-panel, #day-panel .panel-contents")) scroller.scrollTo?.({ top: 0, behavior: "smooth" });
+    });
   const changeDay = (index: number) => {
-    // 이 세션에서 그 날짜에 보던 장소가 있으면 그 장소부터, 처음이면 첫 장소부터 보여준다.
+    // 이 세션에서 그 날짜에 보던 장소가 있으면 그 장소부터, 처음이면 첫 장소(오늘이면 지금·다음 장소)부터 보여준다.
     const nextDay = trip.days[index];
-    const nextId = restoreDaySelection(trip.id, nextDay);
+    const nextId = restoreDaySelection(trip.id, nextDay, nowStopId(index, new Date()));
     const resumed = Boolean(nextId) && nextId !== nextDay.places[0]?.id;
     setDayIndex(index);
     setSelectedId(nextId);
     document.getElementById(`day-tab-${index}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-    requestAnimationFrame(() => {
-      if (mobile && !(mobileView === "list" && resumed)) {
-        planner.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else if (resumed) {
-        cards.current[nextId]?.scrollIntoView({ behavior: "smooth", block: mobile ? "start" : "nearest" });
-      } else {
-        document.getElementById("day-panel")?.scrollTo?.({ top: 0, behavior: "smooth" });
-      }
-    });
+    scrollList(nextId, resumed);
   };
-  const switchView = (view: "map" | "list") => {
-    setMobileView(view);
-    requestAnimationFrame(() => planner.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  };
+  const today = todayIndex(trip, now);
+  const nowId = today >= 0 ? nowStopId(today, now) : undefined;
+  const jumpToNow =
+    today >= 0 && (today !== dayIndex || (nowId && nowId !== selectedId))
+      ? () => {
+          const id = nowId || trip.days[today].places[0]?.id || "";
+          setDayIndex(today);
+          setSelectedId(id);
+          setFocusVersion((version) => version + 1);
+          document.getElementById(`day-tab-${today}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+          scrollList(id, true);
+        }
+      : undefined;
   const showSelectedInList = () => {
-    setMobileView("list");
+    setSheet("half");
     requestAnimationFrame(() => {
       cards.current[selectedId]?.querySelector<HTMLButtonElement>(".place-card")?.focus({ preventScroll: true });
       cards.current[selectedId]?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
   const showSelectedOnMap = () => {
-    setMobileView("map");
+    setSheet("peek");
     setFocusVersion(version => version + 1);
-    requestAnimationFrame(() => {
-      planner.current?.querySelector<HTMLButtonElement>('.mobile-view-switch button[aria-pressed="true"]')?.focus({ preventScroll: true });
-      planner.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
   };
+  const routeModes = [...new Set(dayRoutes.map((route) => route.mode))];
+  const routeNotes = [
+    routes.saveFailed ? "경로를 저장하지 못했습니다. 다음 접속 시 다시 조회될 수 있습니다." : "",
+    dayRoutes.length ? "실시간 교통은 반영하지 않습니다." : "",
+    day?.places.some(p => p.mode === "WALK") ? "도보 경로에 보도나 보행자 통로가 없을 수 있습니다. 현장 표지와 안전한 통행로를 확인하세요." : "",
+    day?.places.some(p => p.mode === "TRANSIT") ? "대중교통 경로는 조회한 시각의 노선 기준이라 실제 시간표·환승과 다를 수 있습니다." : "",
+    ...new Set(routes.warnings),
+  ].filter(Boolean);
   if (!day)
     return (
       <div className="state-page">
@@ -112,20 +142,12 @@ export default function TripPlanner({
   return (
     <>
       <section className="trip-heading">
-        <div>
-          <div className="breadcrumbs">
-            전체 일정
-            <ChevronRight size={12} />
-            <span>{trip.region || trip.title}</span>
-          </div>
-          <div className="trip-title-row">
-            <h1>{trip.title}</h1>
-          </div>
+        <div className="trip-heading-main">
+          <h1>{trip.title}</h1>
           <div className="trip-metadata">
             <span>
               <CalendarDays size={14} />
-              {trip.days[0].date.replaceAll("-", ".")} —{" "}
-              {trip.days.at(-1)?.date.replaceAll("-", ".")}
+              {trip.days[0].date.replaceAll("-", ".")} — {trip.days.at(-1)?.date.replaceAll("-", ".")}
             </span>
             <span className="meta-dot">·</span>
             <span>{trip.days.length}일간의 여행</span>
@@ -137,18 +159,6 @@ export default function TripPlanner({
           </div>
         </div>
         <div className="trip-heading-right">
-          <button className="text-action" onClick={onEdit}>
-            <FilePenLine size={14} />
-            <span>일정 수정</span>
-          </button>
-          <button className="text-action" onClick={onRename}>
-            <Pencil size={14} />
-            <span>이름 변경</span>
-          </button>
-          <button className="text-action danger-text" onClick={onDelete}>
-            <Trash2 size={14} />
-            <span>일정 삭제</span>
-          </button>
           <button
             className="icon-button heading-settings"
             aria-label="지도 설정"
@@ -156,14 +166,11 @@ export default function TripPlanner({
           >
             <Settings2 size={18} />
           </button>
+          <TripMenu onEdit={onEdit} onRename={onRename} onDelete={onDelete} />
         </div>
       </section>
-      <main ref={planner} className={`planner-layout mobile-view-${mobileView}`}>
+      <main ref={planner} className="planner-layout" data-sheet={sheet}>
         <div className="planner-toolbar">
-          <div className="mobile-view-switch" role="group" aria-label="여행 화면 전환">
-            <button aria-pressed={mobileView === "map"} onClick={() => switchView("map")}><MapIcon size={18} />지도</button>
-            <button aria-pressed={mobileView === "list"} onClick={() => switchView("list")}><List size={18} />일정 <span>{day.places.length}</span></button>
-          </div>
           <div className="date-toolbar">
             {/* 바깥 틀은 남는 너비를 재기만 하고 클릭은 지도로 넘긴다. 탭 묶음은 탭만큼만 차지한다. */}
             <div className="date-tabs-frame" ref={dateTabs.ref}>
@@ -211,30 +218,47 @@ export default function TripPlanner({
             routeVisible={routeVisible}
             roadPaths={dayRoutes}
             compact={mobile}
-            onShowList={showSelectedInList}
+            location={location.position}
+            locationStatus={location.status}
+            onStartLocation={location.start}
+            onStopLocation={location.stop}
           />
-          <div className="road-route-status" role="status">
-            <span>{routes.loading ? "전체 날짜의 길찾기 경로를 준비하고 있어요…" : routes.error ||
-              (dayRoutes.length ? "자동차는 파랑, 도보는 갈색, 대중교통은 보라색 경로입니다. 실시간 교통은 반영하지 않습니다." : "이 날짜에는 표시 가능한 자동차·도보·대중교통 경로가 없습니다.")}</span>
-            {routes.saveFailed && <span>경로를 저장하지 못했습니다. 다음 접속 시 다시 조회될 수 있습니다.</span>}
-            {!routes.loading && (routes.error || routes.saveFailed) && <button className="text-action" onClick={routes.retry}>경로 다시 조회</button>}
-            {day.places.some(p => p.mode === "WALK") && <span>도보 경로에 보도나 보행자 통로가 없을 수 있습니다. 현장 표지와 안전한 통행로를 확인하세요.</span>}
-            {day.places.some(p => p.mode === "TRANSIT") && <span>대중교통 경로는 조회한 시각의 노선 기준이라 실제 시간표·환승과 다를 수 있습니다.</span>}
-            {routes.warnings.length > 0 && <div aria-label="길찾기 안내">{[...new Set(routes.warnings)].map(warning => <p key={warning}>{warning}</p>)}</div>}
-          </div>
-          <div className="journey-note">
-            <span className="journey-note-icon">
-              <Route size={17} />
-            </span>
-            <div>
-              <strong>목적지보다, 그 사이의 순간들.</strong>
-              <span>번호를 따라 오늘의 여행을 둘러보세요.</span>
+          {mapsKey && (
+            <div className="route-legend" role="status">
+              {routes.loading ? (
+                <span className="route-legend-status">경로 준비 중…</span>
+              ) : routes.error ? (
+                <span className="route-legend-status route-legend-warn">{routes.error}</span>
+              ) : routeModes.length ? (
+                routeModes.map((mode) => (
+                  <span key={mode} className="route-legend-item">
+                    <i style={{ background: ROUTE_STYLES[mode].color }} />
+                    {ROUTE_STYLES[mode].label}
+                  </span>
+                ))
+              ) : (
+                <span className="route-legend-status">표시할 경로 없음</span>
+              )}
+              {!routes.loading && (routes.error || routes.saveFailed) && (
+                <button className="text-action" onClick={routes.retry}>다시 조회</button>
+              )}
+              {routeNotes.length > 0 && (
+                <button
+                  className="route-legend-info"
+                  aria-label="경로 안내 보기"
+                  aria-expanded={routeNotesOpen}
+                  onClick={() => setRouteNotesOpen((open) => !open)}
+                >
+                  <Info size={15} />
+                </button>
+              )}
+              {routeNotesOpen && routeNotes.length > 0 && (
+                <div className="route-legend-notes" aria-label="길찾기 안내">
+                  {routeNotes.map((note) => <p key={note}>{note}</p>)}
+                </div>
+              )}
             </div>
-            <span className="journey-note-count">
-              {day.places.length} PLACES
-              <ArrowRight size={16} />
-            </span>
-          </div>
+          )}
         </section>
         <aside
           id="day-panel"
@@ -242,6 +266,19 @@ export default function TripPlanner({
           role="tabpanel"
           aria-labelledby={`day-tab-${dayIndex}`}
         >
+          {mobile && <SheetGrip state={sheet} onState={setSheet} />}
+          {(mobile || today >= 0) && (
+            <NextStopCard
+              day={day}
+              dayIndex={dayIndex}
+              selectedId={selectedId}
+              now={now}
+              location={location.position}
+              onSelect={selectPlace}
+              onShowDetails={mobile ? showSelectedInList : undefined}
+              onJumpToNow={jumpToNow}
+            />
+          )}
           <div className="panel-contents">
             <div className="panel-hero">
               <div className="hero-art" aria-hidden="true">
@@ -386,10 +423,16 @@ export default function TripPlanner({
                           </p>
                         )}
                         {p.memo && <p className="place-memo">{p.memo}</p>}
-                        <a href={mapsUrl(p)} target="_blank" rel="noreferrer">
-                          Google Maps에서 보기
-                          <ExternalLink size={12} />
-                        </a>
+                        <div className="place-links">
+                          <a href={directionsUrl(p, i > 0 ? day.places[i - 1].mode : undefined)} target="_blank" rel="noreferrer">
+                            <Navigation size={13} />
+                            길찾기
+                          </a>
+                          <a href={mapsUrl(p)} target="_blank" rel="noreferrer">
+                            Google Maps에서 보기
+                            <ExternalLink size={12} />
+                          </a>
+                        </div>
                         <button className="mobile-show-map" onClick={showSelectedOnMap}><MapIcon size={17} />지도에서 위치 보기</button>
                       </div>
                     )}

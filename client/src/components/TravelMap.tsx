@@ -3,16 +3,17 @@ import {
   Plus,
   Minus,
   LocateFixed,
+  Maximize2,
   Mountain,
   Layers,
   MapPin,
   ExternalLink,
-  Navigation,
   LoaderCircle,
   KeyRound,
+  Settings2,
   X,
 } from "lucide-react";
-import type { Day, LocatedPlace } from "../types";
+import type { Day } from "../types";
 import { hasCoordinates, mapsUrl } from "../types";
 import {
   attachSharedMap,
@@ -24,6 +25,8 @@ import {
 } from "../services/google-maps";
 import { ROUTE_STYLES, type RoadPath } from "../services/road-routes";
 import { useMapsKey } from "../services/maps-key";
+import type { CurrentLocation, LocationStatus } from "../services/use-current-location";
+import { distanceMeters, formatDistance } from "../services/trip-time";
 import {
   LABEL_FONT,
   MOBILE_LABEL_FONT,
@@ -47,7 +50,10 @@ export default function TravelMap({
   routeVisible,
   roadPaths = [],
   compact = false,
-  onShowList,
+  location = null,
+  locationStatus = "off",
+  onStartLocation,
+  onStopLocation,
 }: {
   day: Day;
   region: string;
@@ -58,7 +64,10 @@ export default function TravelMap({
   routeVisible: boolean;
   roadPaths?: RoadPath[];
   compact?: boolean;
-  onShowList?: () => void;
+  location?: CurrentLocation | null;
+  locationStatus?: LocationStatus;
+  onStartLocation?: () => void;
+  onStopLocation?: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
@@ -72,6 +81,12 @@ export default function TravelMap({
   const currentFailure = failure?.key === apiKey ? failure : null;
   const error = currentFailure?.message || "";
   const [keyAlertClosed, setKeyAlertClosed] = useState(false);
+  // 내 위치: 버튼을 누르면 켜고 내 위치로 옮긴다. 켜져 있으면 다시 옮기고, 이미 내 위치를 보고 있으면 끈다.
+  const [centered, setCentered] = useState(false);
+  const [locationNotice, setLocationNotice] = useState("");
+  const follow = useRef(false);
+  const meMarker = useRef<google.maps.Marker | null>(null);
+  const meCircle = useRef<google.maps.Circle | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [aspect, setAspect] = useState(1.3);
@@ -112,7 +127,7 @@ export default function TravelMap({
     700 / (xSpan || 0.02),
     Math.max(baseHeight - 260, 80) / (ySpan || 0.02),
   );
-  const project = (p: LocatedPlace) => ({
+  const project = (p: { lat: number; lng: number }) => ({
     x: 500 + (p.lng - midLng) * cos * scale,
     y: baseHeight / 2 - (p.lat - midLat) * scale,
   });
@@ -126,6 +141,98 @@ export default function TravelMap({
       if (located.length === 1) map.current.setZoom(14);
     }
   };
+  const regionCenter = located.length ? { lat: midLat, lng: midLng } : null;
+  const farFromRegion = (point: { lat: number; lng: number }) =>
+    regionCenter ? distanceMeters(point, regionCenter) : 0;
+  const centerOn = (point: CurrentLocation) => {
+    const far = farFromRegion(point);
+    if (map.current) {
+      map.current.panTo(point);
+      if ((map.current.getZoom?.() ?? 0) < 14) map.current.setZoom(15);
+      setCentered(true);
+      setLocationNotice(far > 50000 ? `여행 지역에서 ${formatDistance(far)} 떨어진 곳에 있어요.` : "");
+      return;
+    }
+    if (far > 50000) {
+      setLocationNotice(`지금 여행 지역에서 ${formatDistance(far)} 떨어져 있어 미리보기 지도에는 표시하지 않아요.`);
+      return;
+    }
+    const pos = project(point);
+    setPan({ x: pos.x - 500, y: pos.y - baseHeight / 2 });
+    setCentered(true);
+    setLocationNotice("");
+  };
+  const pressLocate = () => {
+    if (locationStatus === "locating") return;
+    if (locationStatus === "on" && location) {
+      if (centered) {
+        onStopLocation?.();
+        setCentered(false);
+        setLocationNotice("");
+      } else centerOn(location);
+      return;
+    }
+    follow.current = true;
+    setLocationNotice("");
+    onStartLocation?.();
+  };
+  const locateLabel =
+    locationStatus === "locating"
+      ? "내 위치 찾는 중"
+      : locationStatus === "on"
+        ? centered
+          ? "내 위치 끄기"
+          : "내 위치로 이동"
+        : "내 위치 보기";
+  useEffect(() => {
+    if (locationStatus === "denied")
+      setLocationNotice("위치 권한이 꺼져 있어요. 브라우저 설정에서 이 사이트의 위치 권한을 허용해 주세요.");
+    else if (locationStatus === "unavailable") setLocationNotice("현재 위치를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
+    if (locationStatus !== "on") setCentered(false);
+  }, [locationStatus]);
+  useEffect(() => {
+    if (!location || !follow.current) return;
+    if (apiKey && !error && !ready) return; // Google 지도가 준비되면 옮긴다.
+    follow.current = false;
+    centerOn(location);
+  }, [location, ready]);
+  // 다른 장소를 고르거나 날짜를 바꾸면 '내 위치를 보는 중'이 아니다.
+  useEffect(() => setCentered(false), [focusVersion, day.date]);
+  useEffect(() => {
+    if (!ready || !map.current) return;
+    const listener = map.current.addListener?.("dragstart", () => setCentered(false));
+    return () => listener?.remove();
+  }, [ready]);
+  // Google 지도 위 내 위치: 파란 점과 정확도 원.
+  useEffect(() => {
+    if (!ready || !map.current || !location) {
+      meMarker.current?.setMap(null);
+      meCircle.current?.setMap(null);
+      meMarker.current = null;
+      meCircle.current = null;
+      return;
+    }
+    if (!meMarker.current) {
+      meCircle.current = new google.maps.Circle({
+        map: map.current, center: location, radius: location.accuracy, clickable: false,
+        strokeOpacity: 0, fillColor: "#1a73e8", fillOpacity: 0.12,
+      });
+      meMarker.current = new google.maps.Marker({
+        map: map.current, position: location, clickable: false, zIndex: 1000, title: "내 위치",
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#1a73e8", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 3 },
+      });
+    } else {
+      meMarker.current.setPosition(location);
+      meCircle.current?.setCenter(location);
+      meCircle.current?.setRadius(location.accuracy);
+    }
+  }, [ready, location]);
+  useEffect(() => () => {
+    meMarker.current?.setMap(null);
+    meCircle.current?.setMap(null);
+    meMarker.current = null;
+    meCircle.current = null;
+  }, [ready]);
   useEffect(() => {
     if (!host.current) return;
     const observer = new ResizeObserver((entries) => {
@@ -406,6 +513,7 @@ export default function TravelMap({
           aria-label={`${region} 장소의 상대 위치 미리보기. 실제 지도와 도로 경로가 아닙니다.`}
           onPointerDown={(e) => {
             if ((e.target as Element).closest("[data-marker]")) return;
+            setCentered(false);
             drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
@@ -549,6 +657,17 @@ export default function TravelMap({
               );
             })}
           </g>
+          {location && farFromRegion(location) <= 50000 && (() => {
+            const point = project(location);
+            // 정확도(m)를 화면 픽셀로: 위도 1도 ≈ 111.32km
+            const accuracy = Math.min(80, ((location.accuracy / 111320) * scale) / pinScale);
+            return (
+              <g className="my-location" transform={`translate(${point.x} ${point.y}) scale(${pinScale})`} pointerEvents="none" aria-hidden="true">
+                <circle r={Math.max(accuracy, 10)} fill="#1a73e8" opacity=".14" />
+                <circle r="8" fill="#1a73e8" stroke="#fff" strokeWidth="3" />
+              </g>
+            );
+          })()}
           <g className="map-floating-labels" pointerEvents="none">
             {floatingLabels.map(renderLabel)}
           </g>
@@ -583,12 +702,27 @@ export default function TravelMap({
           </button>
         </div>
       )}
-      <div className="map-location">
+      <button
+        type="button"
+        className="map-location"
+        onClick={onSettings}
+        title={apiKey && !error ? "지도 설정" : "실제 지도·도로 경로가 아닌 상대 위치입니다. 눌러서 지도 키를 등록하세요."}
+      >
         <span className="location-dot" />
-        {apiKey && !error ? "Google Maps" : "위치 미리보기"}
+        <span>{apiKey && !error ? "Google Maps" : "위치 미리보기"}</span>
         <span className="location-divider" />
-        {region}
-      </div>
+        <span className="map-location-region">{region}</span>
+        <Settings2 size={13} aria-hidden="true" />
+      </button>
+      {error && <div className="map-error-note" role="status">{error}</div>}
+      {locationNotice && (
+        <div className="location-notice" role="status">
+          <span>{locationNotice}</span>
+          <button type="button" aria-label="위치 안내 닫기" onClick={() => setLocationNotice("")}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
       {!located.length && (
         <div className="no-coordinates">
           <MapPin size={32} />
@@ -606,13 +740,24 @@ export default function TravelMap({
         </div>
       )}
       <div className="map-tools">
+        {onStartLocation && (
+          <button
+            className={`icon-button ${locationStatus === "on" ? "tool-active" : ""}`}
+            aria-label={locateLabel}
+            title={locateLabel}
+            aria-pressed={locationStatus === "on"}
+            onClick={pressLocate}
+          >
+            {locationStatus === "locating" ? <LoaderCircle className="spinning" size={19} /> : <LocateFixed size={19} />}
+          </button>
+        )}
         <button
           className="icon-button"
           aria-label="모든 장소 보기"
           title="모든 장소 보기"
           onClick={fit}
         >
-          <LocateFixed size={19} />
+          <Maximize2 size={18} />
         </button>
         <div className="zoom-group">
           <button
@@ -647,7 +792,7 @@ export default function TravelMap({
           <Layers size={19} />
         </button>
       </div>
-      {selected && (
+      {selected && !compact && (
         <div className="map-place-preview">
           <div className="preview-icon">
             <Mountain size={23} />
@@ -660,7 +805,6 @@ export default function TravelMap({
             </span>
             <strong>{selected.name}</strong>
           </div>
-          {onShowList && <button className="preview-open-list" onClick={onShowList}>일정 보기</button>}
           <a
             aria-label="선택한 장소를 Google Maps에서 열기"
             href={mapsUrl(selected)}
@@ -671,22 +815,6 @@ export default function TravelMap({
           </a>
         </div>
       )}
-      <div className="map-bottom">
-        <button className="map-mode" onClick={onSettings}>
-          <span className="status-dot" />
-          {apiKey && !error ? "Google Maps 연결" : "위치 미리보기"}
-          <span className="mode-link">
-            지도 안내
-            <Navigation size={11} />
-          </span>
-        </button>
-        <span className="map-disclaimer">
-          {error ||
-            (!apiKey
-              ? "실제 지도·도로 경로가 아닌 상대 위치입니다"
-              : `© Google Maps · ${Object.values(ROUTE_STYLES).map((s) => `${s.label} ${s.colorName}`).join(" / ")}`)}
-        </span>
-      </div>
     </div>
   );
 }
