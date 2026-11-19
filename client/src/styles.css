@@ -3808,3 +3808,12 @@ button.map-location:hover, button.map-location:focus-visible { background: #fffe
 /* 선택한 날짜는 색만이 아니라 굵기로도 구분한다. */
 .trip-view .date-tab.selected > span:nth-child(2) { font-weight: 700; }
 .trip-view .schedule-item.selected .place-card-body h3 { font-weight: 700; }
+.offline-banner {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: #fbefdc;
+  border-bottom: 1px solid #ecdcc0;
+  color: #6b4a14;
+  font-size: 14px;
+  line-height: 1.6;
+}

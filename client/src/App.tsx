@@ -38,6 +38,7 @@ import {
   uploadTrip,
 } from "./services/api";
 import { MapsKeyProvider, resolveMapsKey, type MapsKeyState } from "./services/maps-key";
+import { clearOfflineTripData, useOnline } from "./services/offline";
 import { itineraryPrompt } from "./services/prompts";
 import Dialog from "./components/Dialog";
 import TripPlanner from "./components/TripPlanner";
@@ -54,6 +55,7 @@ const errorMessage = (error: unknown) =>
     : "서버 연결을 확인한 뒤 다시 시도해 주세요.";
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const online = useOnline();
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionError, setSessionError] = useState("");
   const [sessionRetry, setSessionRetry] = useState(0);
@@ -150,6 +152,7 @@ export default function App() {
     const handle = () => {
       setUser(null);
       setTrips([]);
+      clearOfflineTripData();
       setModal("login");
       setToast("로그인이 만료되었습니다. 다시 로그인해 주세요.");
     };
@@ -288,6 +291,7 @@ export default function App() {
     setBusy(true);
     try {
       await logout();
+      clearOfflineTripData();
       setUser(null);
       setTrips([]);
       navigate("guide");
@@ -692,6 +696,11 @@ export default function App() {
                   role="tabpanel"
                   aria-labelledby={`trip-tab-${selectedTrip.id}`}
                 >
+                  {!online && (
+                    <div className="offline-banner" role="status">
+                      인터넷에 연결되어 있지 않아요. 마지막으로 불러온 일정을 보여드려요. 수정·가져오기는 연결된 뒤에 할 수 있어요.
+                    </div>
+                  )}
                   <TripPlanner
                     key={`${selectedTrip.id}:${selectedTrip.source?.importedAt || selectedTrip.createdAt}`}
                     trip={selectedTrip}
